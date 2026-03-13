@@ -1,0 +1,26 @@
+.rideshare_tab_headers li {
+  float: left;
+  padding: 5px 20px;
+  margin: -2px 5px;
+  border: 1px solid #2271b1;
+  position: relative;
+}
+
+.rideshare_tab_headers li.active {
+  border-bottom: #f9f9f9;
+  background-color: #f9f9f9;
+  z-index: 10;
+}
+
+.rideshare_tab_contents {
+  clear: both;
+  border: 1px solid #2271b1;
+  background-color: #f9f9f9;
+  padding: 5px;
+  position: relative;
+  z-index: 0;
+}
+
+.rideshare_tab_contents > div{
+  padding: 20px;
+}
