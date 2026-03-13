@@ -246,7 +246,7 @@ abstract class Admin_Subpage_Abstract implements Ajax_Interface
 
     static function get_template()
     {
-        return wp_unslash(Settings::PLUGIN_DIR_PATH) . '/admin/templates/default_subpage_template.php';
+        return wp_unslash(Settings::PLUGIN_DIR_PATH) . '/includes/admin/templates/default_subpage_template.php';
     }
 
     static function get_view()

@@ -194,6 +194,16 @@ class Autoloader
 			);
 			return $class_path;
 		}
+
+		// Form Tables
+		if (str_ends_with($file_name, 'form-table')) {
+			$class_path =  self::$default_path . implode(
+				DIRECTORY_SEPARATOR,
+				array('includes', 'partials', 'form-tables', 'class-' . $file_name . '.php')
+			);
+			error_log(is_file($class_path) ? "Form Table file found: {$class_path}" : "Form Table file not found: {$class_path}");
+			return $class_path;
+		}
 		// Handlers
 		if (str_ends_with($file_name, 'handler')) {
 			$class_path =  self::$default_path . implode(
