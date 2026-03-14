@@ -60,6 +60,7 @@ class RidesharePlugin
 
 		$method = explode('__', $name);
 		$method[0] = __NAMESPACE__ . '\\' . $method[0];
+		error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> CALLING METHOD: ' . implode('::', $method));
 		if (is_callable($method)) {
 			return call_user_func($method, ...$arguments);
 		}
@@ -94,6 +95,9 @@ class RidesharePlugin
 	 */
 	protected static function admin_hooks()
 	{
+		add_action('edit_user_profile', array(static::class, 'Admin__show_tramp_user_data'));
+		add_action('show_user_profile', array(static::class, 'Admin__show_tramp_user_data'));
+		add_action('edit_user_profile_update', array(static::class, 'Admin__save_tramp_user_data'));
 		add_action('admin_menu', array(static::class, 'Admin__admin_menu'));
 		if ((defined('DOING_AJAX') && DOING_AJAX) || wp_is_json_request()) {
 			foreach (static::$json_classes  as $class) {
