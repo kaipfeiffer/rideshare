@@ -190,8 +190,6 @@ abstract class Controller_Abstract implements Ajax_Interface
             return '';
         }, call_user_func($method));
 
-
-
         return $columns;
     }
 
