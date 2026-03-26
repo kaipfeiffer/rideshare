@@ -209,6 +209,8 @@ abstract class Model_Abstract
     {
         return array();
     }
+
+    
     /**
      * get primary_key
      * 
