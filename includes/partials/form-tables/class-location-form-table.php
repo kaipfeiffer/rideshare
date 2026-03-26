@@ -6,6 +6,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class User_Form_Table extends Form_Table_Abstract
+class Location_Form_Table extends Form_Table_Abstract
 {
 }
