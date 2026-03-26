@@ -53,6 +53,32 @@ class Location_Model extends Model_Abstract
 
 
     /**
+     * get_defaults
+     * 
+     * get default values to the table columns
+     * 
+     * @return array    default values
+     */
+    protected static function get_defaults(): array
+    {
+        return array('created' => date('Y-m-d H:i:s'));
+    }
+
+
+    /**
+     * get_update_defaults
+     * 
+     * get default update values to the table columns
+     * 
+     * @return array    default update values
+     */
+    protected static function get_update_defaults(): array
+    {
+        return array('updated' => date('Y-m-d H:i:s'));
+    }
+
+
+    /**
      * get_labels
      * 
      * returns associative array with column names and their labels
@@ -63,11 +89,13 @@ class Location_Model extends Model_Abstract
     static function get_labels(): array
     {
         return array(
-            'destination_id'        => __('Destination', 'rideshare'),
-            'passengers'            => __('Passengers', 'rideshare'),
-            'description'           => __('Description', 'rideshare'),
-            'start_date'            => __('Start Date', 'rideshare'),
-            'end_date'              => __('End Date', 'rideshare'),
+            'street'    => __('Street', 'rideshare'),
+            'zipcode'   => __('Zip Code', 'rideshare'),
+            'city'      => __('City', 'rideshare'),
+            'region'    => __('Region', 'rideshare'),
+            'country'   => __('Country', 'rideshare'),
+            'latitude'  => __('Latitude', 'rideshare'),
+            'longitude' => __('Longitude', 'rideshare'),
         );
     }
 
@@ -83,11 +111,13 @@ class Location_Model extends Model_Abstract
     static function get_input_types(): array
     {
         return array(
-            'destination_id'        => 'number',
-            'passengers'            => 'number',
-            'description'           => 'text',
-            'start_date'            => 'datetime-local',
-            'end_date'              => 'datetime-local',
+            'street'    => 'text',
+            'zipcode'   => 'text',
+            'city'      => 'text',
+            'region'    => 'text',
+            'country'   => 'text',
+            'latitude'  => 'number',
+            'longitude' => 'number',
         );
     }
 

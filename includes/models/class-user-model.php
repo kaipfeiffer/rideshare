@@ -56,6 +56,32 @@ class User_Model extends Model_Abstract
 
 
     /**
+     * get_defaults
+     * 
+     * get default values to the table columns
+     * 
+     * @return array    default values
+     */
+    protected static function get_defaults(): array
+    {
+        return array('created' => date('Y-m-d H:i:s'));
+    }
+
+
+    /**
+     * get_update_defaults
+     * 
+     * get default update values to the table columns
+     * 
+     * @return array    default update values
+     */
+    protected static function get_update_defaults(): array
+    {
+        return array('updated' => date('Y-m-d H:i:s'));
+    }
+
+
+    /**
      * get_labels
      * 
      * returns associative array with column names and their labels
