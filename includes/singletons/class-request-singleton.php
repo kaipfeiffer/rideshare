@@ -45,7 +45,7 @@ class Request_Singleton
     /*
     * Regex erlaubte Zeichen für Hexadezimalzahlen
     */
-    const REGEX_CLEAN_HEXADECIMAL   =  '/[^\da-fA-F]/';
+    const REGEX_CLEAN_HEXADECIMAL   =  '/[0-9a-fA-F]/';
 
     /*
     * Regex erlaubte Zeichen für ganze positive Zahlen
@@ -121,13 +121,15 @@ class Request_Singleton
 
         $result     = null;
         $regexes    = array(
-            'alphanum'      => static::REGEX_CLEAN_ALPHANUM,
-            'date'          => static::REGEX_CLEAN_DATE,
-            'decimal'       => static::REGEX_CLEAN_DECIMAL,
-            'email'         => static::REGEX_CLEAN_EMAIL,
-            'hexadecimal'   => static::REGEX_CLEAN_HEXADECIMAL,
-            'integer'       => static::REGEX_CLEAN_INTEGER,
-            'string'        => static::REGEX_CLEAN_STRING
+            'alphanum'      => "sanitize_textfield",
+            'date'          => array($this,'dateval'),
+            'decimal'       => "floatval",
+            'email'         => "sanitize_email",
+            'hexadecimal'   => array($this,'hexval'),
+            'integer'       => "intval",
+            'string'        => "sanitize_text_field",
+            'text'          => "sanitize_text_field",
+            'tel'           => "sanitize_text_field",
         );
 
         // nach Parameter suchen 
@@ -144,8 +146,8 @@ class Request_Singleton
 
             // wenn Parameter von unerwünschten Zeichen befreit werden soll
             if ($clean) {
-                if (isset($regexes[$clean])) {
-                    $result = preg_replace($regexes[$clean], '', $result);
+                if (isset($regexes[$clean]) && is_callable($regexes[$clean])) {
+                    $result = call_user_func($regexes[$clean], $result);
                 } else {
                     $result = preg_replace($clean, '', $result);
                 }
@@ -220,6 +222,16 @@ class Request_Singleton
     public function __toString()
     {
         return json_encode($this->request);
+    }
+
+    protected function dateval($value)
+    {
+        return preg_replace(self::REGEX_CLEAN_DATE, '', $value);
+    }
+
+    protected function hexval($value)
+    {
+        return preg_replace(self::REGEX_CLEAN_HEXADECIMAL, '', $value);
     }
 
     /**
