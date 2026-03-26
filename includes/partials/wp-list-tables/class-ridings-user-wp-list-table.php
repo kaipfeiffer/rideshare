@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) {
 
 class Ridings_User_WP_List_Table extends Ridings_WP_List_Table_Abstract
 {
-
     function column_default($item, $column_name)
     {
         switch ($column_name) {
@@ -39,8 +38,8 @@ class Ridings_User_WP_List_Table extends Ridings_WP_List_Table_Abstract
             $item['familyname']
         );
         $actions = array(
-            'edit'      => sprintf('<a href="?page=%1$s&amp;action=%2$s&amp;user=%3$d" aria-label="%5$s %4$s">%5$s</a>', $_REQUEST['page'], 'edit', $item['id'], $name, __('Edit')),
-            'delete'    => sprintf('<a href="?page=%1$s&amp;action=%2$s&amp;user=%3$d" aria-label="%5$s %4$s">%5$s</a>', $_REQUEST['page'], 'delete', $item['id'], $name, __('Delete')),
+            'edit'      => sprintf('<a href="?page=%1$s&amp;action=%2$s&amp;id=%3$d" aria-label="%5$s %4$s">%5$s</a>', $_REQUEST['page'], 'edit', $item[$this->controller::get_primary_key()], $name, __('Edit','rideshare')),
+            'delete'    => sprintf('<a href="?page=%1$s&amp;action=%2$s&amp;id=%3$d" aria-label="%5$s %4$s">%5$s</a>', $_REQUEST['page'], 'delete', $item[$this->controller::get_primary_key()], $name, __('Delete','rideshare')),
         );
 
         return sprintf(
