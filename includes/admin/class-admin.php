@@ -215,7 +215,9 @@ class Admin implements Ajax_Interface
     static protected function get_tramp_user_id_meta($user_id)
     {
         $blog_id = static::get_blog_id();
-        return get_user_meta($user_id, $blog_id . '_tramp_user_id', true);
+        $user_meta = get_user_meta($user_id, $blog_id . '_tramp_user_id', true);
+        error_log(__CLASS__ . '->' . __LINE__ . '->' . __FUNCTION__ . '-> user_meta:' . print_r($user_meta, 1));
+        return $user_meta;
     }
 
 
@@ -561,6 +563,7 @@ class Admin implements Ajax_Interface
         $class    = __NAMESPACE__ . '\\' . $class;
 
         $current_method = array($class, 'is_allowed');
+        error_log(__CLASS__ . '->' . __LINE__ . '->' . $class . '-> is_allowed:' . is_callable($current_method) . '->' . $target);
 
         if (is_callable($current_method) && call_user_func($current_method, $target)) {
             $current_method = array($class, $target);
@@ -614,7 +617,8 @@ class Admin implements Ajax_Interface
 
             if (!count($missings)) {
                 if (!isset($location_columns['id']) || empty($location_columns['id'])) {
-                    $tramp_location_id = Location_Controller::create($location_columns);
+                    $tramp_location_data    = Location_Controller::create($location_columns);
+                    $tramp_location_id      = $tramp_location_data[Location_Controller::get_primary_key()];
                     static::set_tramp_location_id_meta($user_id, $tramp_location_id);
                 } else {
                     $location_columns = Location_Controller::update($location_columns);
@@ -623,7 +627,8 @@ class Admin implements Ajax_Interface
 
                 $user_columns['location_id']    = $tramp_location_id;
                 if (!isset($user_columns['id']) || empty($user_columns['id'])) {
-                    $tramp_user_id = User_Controller::create($user_columns);
+                    $tramp_user_data    = User_Controller::create($user_columns);
+                    $tramp_user_id      = $tramp_user_data[User_Controller::get_primary_key()];
                     static::set_tramp_user_id_meta($user_id, $tramp_user_id);
                 } else {
                     $user_columns = User_Controller::update($user_columns);
@@ -648,22 +653,30 @@ class Admin implements Ajax_Interface
      */
     static public function show_tramp_user_data($user)
     {
+        error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> SHOW_TRAMP_USER_DATA');
         $is_tramp_user = static::get_is_tramp_user_meta($user->ID);
         if ($is_tramp_user) {
             $tramp_location_id  = static::get_tramp_location_id_meta($user->ID);
             $tramp_user_id      = static::get_tramp_user_id_meta($user->ID);
 
-            if ($tramp_location_id ?? null) {
-                $location_columns = Location_Controller::read($tramp_location_id);
-            } else {
-                $location_columns = Location_Controller::get_columns();
-            }
             if ($tramp_user_id ?? null) {
                 $user_columns = User_Controller::read($tramp_user_id);
+                if(array_is_list($user_columns)) {
+                    $user_columns = array_shift($user_columns);
+                }
             } else {
                 $user_columns = User_Controller::get_columns();
             }
-
+            
+            if ($tramp_location_id ?? null) {
+                $location_columns = Location_Controller::read($tramp_location_id);
+                if(array_is_list($location_columns)) {
+                    $location_columns = array_shift($location_columns);
+                }
+            } else {
+                $location_columns = Location_Controller::get_columns();
+            }
+            error_log(__CLASS__ . '->' . __LINE__ . '->' . $tramp_user_id . ':' . print_r($user_columns, 1));
             $user_columns['email']  = $user_columns['email'] ? $user_columns['email'] : $user->user_email;
         }
         $labels = static::get_labels();
@@ -685,7 +698,7 @@ class Admin implements Ajax_Interface
             'latitude' => 'number',
             'longitude' => 'number'
         );
-        include_once Settings::PLUGIN_DIR_PATH     . implode(DIRECTORY_SEPARATOR, array('admin', 'templates', 'tramp-user-settings.php'));
+        include_once Settings::PLUGIN_DIR_PATH     . implode(DIRECTORY_SEPARATOR, array('includes', 'admin', 'templates', 'tramp-user-settings.php'));
     }
 
     /**
