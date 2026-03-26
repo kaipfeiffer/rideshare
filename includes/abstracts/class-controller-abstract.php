@@ -215,7 +215,7 @@ abstract class Controller_Abstract implements Ajax_Interface
         }
 
         $primary_key = call_user_func($method);
-        return $primary_key;
+        return $primary_key['column'] ?? null;
     }
 
 
@@ -305,7 +305,7 @@ abstract class Controller_Abstract implements Ajax_Interface
         }
 
         $method = array($model_class, 'read');
-            // error_log(__CLASS__ . '->' . __LINE__ . '->Controller->read:' . is_callable(($method)) . '#');
+            error_log(__CLASS__ . '->' . __LINE__ . '->Controller->read:' . is_callable(($method)) . '#');
         if (!is_callable($method)) {
             static::log_method_not_callable($method);
             return null;
@@ -480,8 +480,10 @@ abstract class Controller_Abstract implements Ajax_Interface
             return static::log_class_not_found();
         }
 
+        error_log(__CLASS__ . '->' . __LINE__ . '->Controller->update: data:' . print_r($data,1));
         $method = array($model_class, 'update');
         if (!is_callable($method)) {
+            error_log(__CLASS__ . '->' . __LINE__ . '->Controller->update: method not callable:' . print_r($method,1));
             static::log_method_not_callable($method);
             return null;
         }

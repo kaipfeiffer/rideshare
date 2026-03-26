@@ -33,6 +33,5 @@ class Riding_Controller extends Controller_Abstract
      * 
      * @var string
      */
-    static protected $tramp_class = null;
-
+    static protected $model_class = null;
 }
