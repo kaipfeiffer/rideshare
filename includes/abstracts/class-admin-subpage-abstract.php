@@ -122,13 +122,23 @@ abstract class Admin_Subpage_Abstract implements Ajax_Interface
 
     static function display_edit_form()
     {
-        if (current_user_can('manage_options') && isset($_REQUEST['user']) && is_numeric($_REQUEST['user'])) {
+        if (current_user_can('manage_options') && isset($_REQUEST['id']) && is_numeric($_REQUEST['id'])) {
             $form = static::get_form_table();
-            if ($form instanceof User_Form_Table) {
-                $form->display();
-            } else {
+            if (!$form instanceof Form_Table_Abstract) {
                 echo '<p>' . __('User not found.', 'rideshare') . '</p>';
+                return;
             }
+            $request = Request_Singleton::get_instance();
+            if (wp_verify_nonce($request->get(static::NONCE_FIELD, 'string'), static::NONCE)) {
+
+                error_log(__CLASS__ . '->' . __LINE__ . '-> Nonce verified');
+                $form->update($request);
+            }
+            else{
+                error_log(__CLASS__ . '->' . __LINE__ . '-> Nonce verification failed');
+            }
+
+            $form->display();
         } else {
             echo '<p>' . __('You do not have permission to edit users.', 'rideshare') . '</p>';
         }
