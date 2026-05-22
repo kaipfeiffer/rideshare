@@ -53,3 +53,4 @@ wp-config.php
 # Mac-Dateien
 .DS_Store
 /vendor/
+includes/class-settings.php
