@@ -27,6 +27,8 @@ if (! defined('ABSPATH')) {
 
 class RidesharePlugin
 {
+	const PLUGIN_PREFIX 		= 'kprs_';
+
 	/**
 	 * $is_loaded
 	 * 
@@ -35,6 +37,8 @@ class RidesharePlugin
 	 * @var	bool
 	 */
 	static private $is_loaded = false;
+
+	static $info;
 
 	static $json_classes = array(
 		__NAMESPACE__ . '\\Routing_Handler',
@@ -95,6 +99,19 @@ class RidesharePlugin
 	 */
 	protected static function admin_hooks()
 	{
+		$post_types = self::get_post_types();
+		foreach ($post_types as $post_type => $args) {
+			$plain_post_type = str_replace(Settings::PLUGIN_PREFIX, '', str_replace(Settings::PLUGIN_PREFIX, '', $post_type));
+			$classname = str_replace('_', '', ucwords($plain_post_type, '_')) . '_Cpt';
+			$file_path = Settings::PLUGIN_DIR_PATH . 'includes' . DIRECTORY_SEPARATOR . 'custom-post-types' . DIRECTORY_SEPARATOR . 'class-' . str_replace('_', '-', $plain_post_type) . '-cpt.php';
+
+			if (is_file($file_path)) {
+
+				add_action('add_meta_boxes_' . $post_type, array(__CLASS__, $classname . '__add_meta_boxes'));
+				add_filter('wp_insert_post_data', array(__CLASS__, $classname . '__wp_insert_post_data'), 10, 4);
+			}
+		}
+
 		add_action('edit_user_profile', array(static::class, 'Admin__show_tramp_user_data'));
 		add_action('show_user_profile', array(static::class, 'Admin__show_tramp_user_data'));
 		add_action('edit_user_profile_update', array(static::class, 'Admin__save_tramp_user_data'));
@@ -126,6 +143,98 @@ class RidesharePlugin
 
 
 	/**
+	 * create_plugin_constants
+	 * 
+	 *
+	 * @return	string
+	 * 
+	 * @since    0.1.0
+	 * @access   protected
+	 */
+	protected static function create_plugin_constants(): string
+	{
+		$info = static::get_plugin_info();
+
+		$new_settings_content = 'const PLUGIN_DIR_PATH	= \'' . plugin_dir_path(__FILE__) . '\';' . "\n";
+		$new_settings_content .= 'const PLUGIN_NAME	= \'' . $info['Name'] . '\';' . "\n";
+		$new_settings_content .= 'const PLUGIN_PREFIX	= \'' . static::PLUGIN_PREFIX . '\';' . "\n";
+		$new_settings_content .= 'const PLUGIN_TEXT_DOMAIN	= \'' . $info['TextDomain'] . '\';' . "\n";
+		$new_settings_content .= 'const PLUGIN_URL	= \'' . plugin_dir_url(__FILE__) . '\';' . "\n";
+		$new_settings_content .= 'const PLUGIN_VERSION	= \'' . $info['Version'] . '\';' . "\n";
+
+		return $new_settings_content;
+	}
+
+	protected static function get_plugin_info(): array
+	{
+		if (empty(static::$info)) {
+			static::$info = get_plugin_data(__FILE__);
+		}
+		return static::$info;
+	}
+
+
+	/**
+	 * get_post_types
+	 * 
+	 * For performance reasons all custom post type definitions
+	 * are present in the main file, because the custum post types
+	 * where defined on every page request.
+	 *
+	 * @return	array
+	 * 
+	 * @since    0.1.0
+	 * @access   private
+	 */
+	static function get_post_types(): array
+	{
+		$class_name = __NAMESPACE__ . '\\Settings';
+
+		if (class_exists($class_name)) {
+			error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> GETTING POST TYPES FROM CLASS: ' . $class_name);
+			return $class_name::POST_TYPES ?? array();
+		}
+		return array();
+	}
+
+
+	/**
+	 * scan_post_types
+	 * 
+	 * For performance reasons all custom post type definitions
+	 * were parsed on first call and stored in the settings class file.
+	 * Because theywere defined on every page request.
+	 *
+	 * @return	array
+	 * 
+	 * @since    0.1.0
+	 * @access   protected
+	 */
+	protected static function scan_post_types(): array
+	{
+		$cpt_list =  array();
+		$custom_post_types 	= scandir(plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'custom-post-types');
+
+		foreach ($custom_post_types as $file_name) {
+			if (!in_array($file_name, array('.', '..'))) {
+				$cpt_classname = __NAMESPACE__ . '\\' . str_replace('-', '_', ucwords(preg_replace('/\.php$/', '', preg_replace('/^class-/', '', $file_name)), '-'));
+				$method = array($cpt_classname, 'get_post_type');
+				
+				if (is_callable($method)) {
+					$cpt_name = call_user_func($method);
+					$method = array($cpt_classname, 'get_custom_post_type_definition');
+					if (is_callable($method)) {
+						$cpt_definition = call_user_func($method);
+						$cpt_list[$cpt_name] = $cpt_definition;
+					}
+				}
+			}
+		}
+		return $cpt_list;
+	}
+
+
+	/**
 	 * init
 	 * 
 	 * Loads textdomain
@@ -137,6 +246,12 @@ class RidesharePlugin
 	static function init()
 	{
 		// $loaded = load_plugin_textdomain('rideshare', false, dirname(plugin_basename(__FILE__)) . '/languages');
+		$post_types = self::get_post_types();
+
+		foreach ($post_types as $post_type => $args) {
+			$cpt = register_post_type($post_type, $args);
+			// error_log(__CLASS__ . '->' . __LINE__ . '->' . "CPT: " . print_r($cpt, true));
+		}
 	}
 
 
@@ -169,7 +284,7 @@ class RidesharePlugin
 			require_once plugin_dir_path(__FILE__)  . 'vendor/autoload.php';
 
 			error_log(is_file(plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-autoloader.php') ? "Autoloader file found" : "Autoloader file not found");
-			
+
 			/**
 			 * Provide new php-methods
 			 */
@@ -190,7 +305,28 @@ class RidesharePlugin
 	 * @static
 	 * @since	0.1.0
 	 */
-	protected static function init_settings() {}
+	protected static function init_settings()
+	{
+		self::load_dependencies();
+
+		$info = static::get_plugin_info();
+		$settings_class_path = plugin_dir_path(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
+
+		$settings_file_content = file_get_contents($settings_class_path);
+		list($header, $content)	= explode('// Start Settings-Constants', $settings_file_content);
+		list($content, $footer)	= explode('// End Settings-Constants', $content);
+
+		$new_settings_content = static::create_plugin_constants();
+
+		$new_settings_content .= "\n" . '// Custom Post Types' . "\n";
+		$cpt_list = static::scan_post_types();
+
+		$new_settings_content .= 'const POST_TYPES = ' . var_export($cpt_list, true) . ';';
+
+		$header	= preg_replace('/Version:[^\n]*/', 'Version:           ' . $info['Version'], $header);
+		$new_registration_file_content = $header . '// Start Settings-Constants' . "\n" . $new_settings_content . "\n" . '// End Settings-Constants' . $footer;
+		file_put_contents($settings_class_path, $new_registration_file_content);
+	}
 
 
 	/**
@@ -306,10 +442,17 @@ class RidesharePlugin
 		register_activation_hook(__FILE__, array(__CLASS__, 'activate'));
 		register_deactivation_hook(__FILE__, array(__CLASS__, 'deactivate'));
 
+		$settings_class_file = plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
+
+		if (is_admin()) {
+			if (!is_file($settings_class_file) || get_plugin_data($settings_class_file)['Version'] < get_plugin_data(__FILE__)['Version']) {
+				self::init_settings();
+			}
+		}
+
 		/**
 		 * The Settings-Class
 		 */
-		$settings_class_file = plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
 		if (is_file($settings_class_file)) {
 			require plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
 
