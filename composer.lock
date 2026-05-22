@@ -1,0 +1,66 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "ce7768ab17425e6344e8550ce8744ce6",
+    "packages": [
+        {
+            "name": "kaipfeiffer/wpbase",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kaipfeiffer/wpbase.git",
+                "reference": "a8824e6c497eae4cde5be6e05f12ee37c5f8daff"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kaipfeiffer/wpbase/zipball/a8824e6c497eae4cde5be6e05f12ee37c5f8daff",
+                "reference": "a8824e6c497eae4cde5be6e05f12ee37c5f8daff",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "php": "^7.3|^8.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "KaiPfeiffer\\WPBase\\": "src"
+                }
+            },
+            "license": [
+                "LGPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Kai Pfeiffer",
+                    "email": "kp@loworx.com",
+                    "homepage": "http://loworx.com"
+                }
+            ],
+            "homepage": "https://loworx.com",
+            "keywords": [
+                "php"
+            ],
+            "support": {
+                "source": "https://github.com/kaipfeiffer/wpbase/tree/main",
+                "issues": "https://github.com/kaipfeiffer/wpbase/issues"
+            },
+            "time": "2026-04-24T11:19:19+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "kaipfeiffer/wpbase": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
+}

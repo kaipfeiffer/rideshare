@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Ridings_Location_WP_List_Table extends Ridings_WP_List_Table_Abstract
+class Location_WP_List_Table extends WP_List_Table_Abstract
 {
     function column_fullname($item)
     {

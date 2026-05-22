@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Ridings_User_WP_List_Table extends Ridings_WP_List_Table_Abstract
+class User_WP_List_Table extends WP_List_Table_Abstract
 {
     function column_default($item, $column_name)
     {

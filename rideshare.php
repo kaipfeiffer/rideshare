@@ -6,8 +6,8 @@ namespace KaiPfeiffer\Rideshare;
  * Plugin Name:       Rideshare
  * Description:       Rideshare connects local rides with local co-riders to reduce traffic and carbon dioxide emissions.
  * Version:           0.1.0
- * Requires at least: 6.8
- * Requires PHP:      7.4
+ * Requires at least: 5.7
+ * Requires PHP:      7.3
  * Author:            Kai Pfeiffer
  * Author URI:        https://github.com/kaipfeiffer
  * 
@@ -163,7 +163,13 @@ class RidesharePlugin
 			 */
 			require plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-autoloader.php';
 
+			/**
+			 * Composer Autoloader
+			 */
+			require_once plugin_dir_path(__FILE__)  . 'vendor/autoload.php';
+
 			error_log(is_file(plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-autoloader.php') ? "Autoloader file found" : "Autoloader file not found");
+			
 			/**
 			 * Provide new php-methods
 			 */

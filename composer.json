@@ -1,0 +1,10 @@
+{
+    "require": {
+        "kaipfeiffer/wpbase": "dev-main"
+    },
+    "repositories": [{
+        "name": "repo-name",
+        "type": "vcs",
+        "url": "https://github.com/kaipfeiffer/wpbase.git"
+    }]
+}

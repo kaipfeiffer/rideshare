@@ -15,7 +15,9 @@ if (!defined('WPINC')) {
  * @version        1.0.0
  * @author        Kai Pfeiffer
  */
-class Admin implements Ajax_Interface
+
+use KaiPfeiffer\WPBase\Interfaces\AjaxInterface;
+class Admin implements AjaxInterface
 {
 
 
