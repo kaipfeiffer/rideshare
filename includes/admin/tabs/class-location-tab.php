@@ -14,7 +14,7 @@ if (!defined('WPINC')) {
  * @version        1.0.0
  * @author        Kai Pfeiffer
  */
-class Location_Tab extends Admin_Tab_Abstract implements Ajax_Interface{
+class Location_Tab extends Admin_Tab_Abstract {
 
     const ADMIN_TAB_SLUG = 'location';
 
