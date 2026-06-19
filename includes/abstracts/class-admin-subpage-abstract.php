@@ -62,7 +62,7 @@ abstract class Admin_Subpage_Abstract extends AdminSubpageAbstract
 
     abstract static function get_plural();
 
-    abstract static function get_singlular();
+    abstract static function get_singular();
 
     /**
      * 
@@ -92,6 +92,6 @@ abstract class Admin_Subpage_Abstract extends AdminSubpageAbstract
 
     static function get_template()
     {
-        return wp_unslash(Settings::PLUGIN_DIR_PATH) . '/includes/admin/templates/default_subpage_template.php';
+        return wp_unslash(Settings::PLUGIN_DIR_PATH) . '/includes/admin/templates/default-subpage-template.php';
     }
 }
