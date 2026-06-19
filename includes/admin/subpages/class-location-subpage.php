@@ -25,7 +25,7 @@ class Location_Subpage extends Admin_Subpage_Abstract
 
     static function get_page_title()
     {
-        return __('Edit Locations', 'rideshare');
+        return __('Locations', 'rideshare');
     }
 
     static function get_plural()
@@ -33,9 +33,9 @@ class Location_Subpage extends Admin_Subpage_Abstract
         return __('Location', 'rideshare');
     }
 
-    static function get_singlular()
+    static function get_singular()
     {
-        return __('Locations', 'rideshare');
+        return __('Location', 'rideshare');
     }
     
     static function get_title()

@@ -32,13 +32,13 @@ class User_Subpage extends Admin_Subpage_Abstract{
         return __('Users','rideshare');
     }
 
-    static function get_singlular()
+    static function get_singular()
     {
         return __('User','rideshare');
     }
 
     static function get_page_title()
     {
-        return __('Edit Users','rideshare');
+        return __('Users','rideshare');
     }
 }
