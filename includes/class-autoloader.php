@@ -201,7 +201,6 @@ class Autoloader
 				DIRECTORY_SEPARATOR,
 				array('includes', 'partials', 'form-tables', 'class-' . $file_name . '.php')
 			);
-			error_log(is_file($class_path) ? "Form Table file found: {$class_path}" : "Form Table file not found: {$class_path}");
 			return $class_path;
 		}
 		// Handlers
