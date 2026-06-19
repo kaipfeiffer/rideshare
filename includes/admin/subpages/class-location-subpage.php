@@ -30,7 +30,7 @@ class Location_Subpage extends Admin_Subpage_Abstract
 
     static function get_plural()
     {
-        return __('Location', 'rideshare');
+        return __('Locations', 'rideshare');
     }
 
     static function get_singular()
