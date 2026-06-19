@@ -191,7 +191,6 @@ class RidesharePlugin
 		$class_name = __NAMESPACE__ . '\\Settings';
 
 		if (class_exists($class_name) && defined($class_name . '::POST_TYPES')) {
-			error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> GETTING POST TYPES FROM CLASS: ' . $class_name);
 			return $class_name::POST_TYPES ?? array();
 		}
 		return array();
@@ -219,7 +218,7 @@ class RidesharePlugin
 			if (!in_array($file_name, array('.', '..'))) {
 				$cpt_classname = __NAMESPACE__ . '\\' . str_replace('-', '_', ucwords(preg_replace('/\.php$/', '', preg_replace('/^class-/', '', $file_name)), '-'));
 				$method = array($cpt_classname, 'get_post_type');
-				
+
 				if (is_callable($method)) {
 					$cpt_name = call_user_func($method);
 					$method = array($cpt_classname, 'get_custom_post_type_definition');
@@ -312,9 +311,17 @@ class RidesharePlugin
 		$info = static::get_plugin_info();
 		$settings_class_path = plugin_dir_path(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
 
-		$settings_file_content = file_get_contents($settings_class_path);
-		list($header, $content)	= explode('// Start Settings-Constants', $settings_file_content);
-		list($content, $footer)	= explode('// End Settings-Constants', $content);
+		if (is_file($settings_class_path)) {
+			$settings_file_content = file_get_contents($settings_class_path);
+		} else {
+			$default_settings_class_path = plugin_dir_path(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'class-default-settings.php';
+			if (!is_file($default_settings_class_path)) {
+				throw new \Exception('Default settings file not found: ' . $default_settings_class_path);
+			}
+			$settings_file_content = file_get_contents($default_settings_class_path);
+		}
+		list($settings_file_header, $content)	= explode('// Start Settings-Constants', $settings_file_content);
+		list($content, $settings_file_footer)	= explode('// End Settings-Constants', $content);
 
 		$new_settings_content = static::create_plugin_constants();
 
@@ -323,9 +330,13 @@ class RidesharePlugin
 
 		$new_settings_content .= 'const POST_TYPES = ' . var_export($cpt_list, true) . ';';
 
-		$header	= preg_replace('/Version:[^\n]*/', 'Version:           ' . $info['Version'], $header);
-		$new_registration_file_content = $header . '// Start Settings-Constants' . "\n" . $new_settings_content . "\n" . '// End Settings-Constants' . $footer;
-		file_put_contents($settings_class_path, $new_registration_file_content);
+		$settings_file_header	= preg_replace('/Version:[^\n]*/', 'Version:           ' . $info['Version'], $settings_file_header);
+		$new_settings_file_content = sprintf(
+			"%1\$s // Start Settings-Constants\n%2\$s\n// End Settings-Constants %3\$s", 
+			$settings_file_header, 
+			$new_settings_content, 
+			$settings_file_footer);
+		file_put_contents($settings_class_path, $new_settings_file_content);
 	}
 
 
