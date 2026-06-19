@@ -190,7 +190,7 @@ class RidesharePlugin
 	{
 		$class_name = __NAMESPACE__ . '\\Settings';
 
-		if (class_exists($class_name)) {
+		if (class_exists($class_name) && defined($class_name . '::POST_TYPES')) {
 			error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> GETTING POST TYPES FROM CLASS: ' . $class_name);
 			return $class_name::POST_TYPES ?? array();
 		}
