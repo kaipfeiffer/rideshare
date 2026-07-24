@@ -101,6 +101,33 @@ class Activator
 	public static function activate($plugin_file)
 	{
 		$roles 		= self::get_roles();
+		static::set_roles($roles);
+		static::db_delta();
+
+		$settings_class_file = plugin_dir_path(__FILE__) . 'class-settings.php';
+		if (!is_file($settings_class_file)) {
+			$settings_defaults_file = plugin_dir_path(__FILE__) . 'class-default-settings.php';
+			if (is_file($settings_defaults_file)) {
+				copy($settings_defaults_file, $settings_class_file);
+				require $settings_class_file;
+			}
+			static::create_settings_file($plugin_file);
+		}
+	}
+
+
+	/**
+	 * db_delta
+	 * 
+	 * create tables for all models
+	 *
+	 * @return	string
+	 * 
+	 * @since    0.1.1
+	 * @access   protected
+	 */
+	protected static function set_roles($roles)
+	{
 		foreach ($roles as $role_key => $role_data) {
 			// Create role if it doesn't exist
 			if (! get_role($role_key)) {
@@ -114,24 +141,27 @@ class Activator
 				add_role($role_key, $role_data['name'], $role_data['capabilities']);
 			}
 		}
+	}
 
 
+	/**
+	 * db_delta
+	 * 
+	 * create tables for all models
+	 *
+	 * @return	string
+	 * 
+	 * @since    0.1.1
+	 * @access   protected
+	 */
+	protected static function db_delta()
+	{
 		foreach (static::$models as $model) {
 			$method	= array(__NAMESPACE__ . '\\' . $model, 'db_delta');
 			if (is_callable($method)) {
 				call_user_func($method);
 			}
 		}
-
-		$settings_class_file = plugin_dir_path(__FILE__) . 'class-settings.php';
-		if (!is_file($settings_class_file)) {
-			$settings_defaults_file = plugin_dir_path(__FILE__) . 'class-default-settings.php';
-			if (is_file($settings_defaults_file)) {
-				copy($settings_defaults_file, $settings_class_file);
-				require $settings_class_file;
-			}
-		}
-		static::create_settings_file($plugin_file);
 	}
 
 
@@ -215,13 +245,15 @@ class Activator
 
 		$version	= get_option(static::$plugin_info['prefix'] . '_version', '0.1.0');
 
+		error_log('update_plugin: ' . static::$plugin_info['prefix'] . '_version: ' . $version . ' -> ' . static::$plugin_info['Version']);
 		if ($version < static::$plugin_info['Version']) {
 
 			switch ($version) {
-				case '0.1.0':
+				case '0.1.1':
 					// update from 0.1.0 to 0.1.1
 					// static::LOG_FLAGS & static::LOG_UPDATE_PLUGIN &&
 					// update process for version 0.1.1
+					static::db_delta();
 					break;
 			}
 			update_option(static::$plugin_info['prefix'] . '_version', static::$plugin_info['Version'], false);
