@@ -178,7 +178,7 @@ class RidesharePlugin
 	 * get_post_types
 	 * 
 	 * For performance reasons all custom post type definitions
-	 * are present in the main file, because the custum post types
+	 * are present in the main file, because the custom post types
 	 * where defined on every page request.
 	 *
 	 * @return	array
@@ -215,7 +215,7 @@ class RidesharePlugin
 		$custom_post_types 	= scandir(plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'custom-post-types');
 
 		foreach ($custom_post_types as $file_name) {
-			if (!in_array($file_name, array('.', '..'))) {
+			if (!in_array($file_name, array('.', '..','class-sample-cpt.php'))) {
 				$cpt_classname = __NAMESPACE__ . '\\' . str_replace('-', '_', ucwords(preg_replace('/\.php$/', '', preg_replace('/^class-/', '', $file_name)), '-'));
 				$method = array($cpt_classname, 'get_post_type');
 

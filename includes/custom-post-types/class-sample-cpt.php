@@ -7,7 +7,7 @@ if (! defined('ABSPATH')) {
 	die;
 }
 
-class Stops_Cpt extends CPT_Abstract
+class Sample_Cpt extends CPT_Abstract
 {
 	/** 
 	 * NONCE
@@ -17,7 +17,7 @@ class Stops_Cpt extends CPT_Abstract
 	 * 
 	 * @const string
 	 */
-	const NONCE = 'kprs_stops_nonce';
+	const NONCE = 'kprs_sample_nonce';
 
 	const CLASSNAME	= __CLASS__;
 
@@ -26,14 +26,14 @@ class Stops_Cpt extends CPT_Abstract
 	 *
 	 * @var string
 	 */
-	protected static $object_type = 'kprs_stops';
+	protected static $object_type = 'kprs_sample';
 
 	/**
 	 * Post type.
 	 *
 	 * @var string
 	 */
-	protected static $post_type = 'kprs_stops';
+	protected static $post_type = 'kprs_sample';
 
 
 	/**
@@ -58,15 +58,15 @@ class Stops_Cpt extends CPT_Abstract
 	{
 		return array(
 			'labels'       => array(
-				'name'          => __('Stops', 'rideshare'),
-				'singular_name' => __('Stop', 'rideshare'),
-				'menu_name'     => __('Stops', 'rideshare'),
-				'add_new'       => __('Add New Stop', 'rideshare'),
-				'add_new_item'  => __('Add New Stop', 'rideshare'),
-				'new_item'      => __('New Stop', 'rideshare'),
-				'edit_item'     => __('Edit Stop', 'rideshare'),
-				'view_item'     => __('View Stop', 'rideshare'),
-				'all_items'     => __('Stops', 'rideshare'),
+				'name'          => __('Samples', 'rideshare'),
+				'singular_name' => __('Sample', 'rideshare'),
+				'menu_name'     => __('Samples', 'rideshare'),
+				'add_new'       => __('Add New Sample', 'rideshare'),
+				'add_new_item'  => __('Add New Sample', 'rideshare'),
+				'new_item'      => __('New Sample', 'rideshare'),
+				'edit_item'     => __('Edit Sample', 'rideshare'),
+				'view_item'     => __('View Sample', 'rideshare'),
+				'all_items'     => __('Samples', 'rideshare'),
 			),
     		'capability_type'    => self::$post_type,
 			'public'       => true,
@@ -88,8 +88,8 @@ class Stops_Cpt extends CPT_Abstract
 	public static function add_meta_boxes()
 	{
 		add_meta_box(
-			'_kprs_stops_properties',
-			__('Stops Data', 'rideshare'),
+			'_kprs_samples_properties',
+			__('Samples Data', 'rideshare'),
 			array(__CLASS__, 'create_view'),
 			self::$post_type,
 			'normal',
