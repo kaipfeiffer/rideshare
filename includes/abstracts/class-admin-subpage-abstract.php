@@ -78,7 +78,7 @@ abstract class Admin_Subpage_Abstract extends AdminSubpageAbstract
      * Settings::PLUGIN_URL . implode(DIRECTORY_SEPARATOR, array('admin', 'assets', 'js', 'wp-list-class-ajax.js'));
      */ 
     static function get_js_url(){
-        $js_url  = SETTINGS::PLUGIN_URL . implode(DIRECTORY_SEPARATOR, array('admin', 'assets', 'js', 'wp-list-class-ajax.js'));
+        $js_url  = SETTINGS::PLUGIN_URL . implode(DIRECTORY_SEPARATOR, array('includes', 'admin', 'assets', 'js', 'wp-list-class-ajax.js'));
         return $js_url;
     }
 
