@@ -88,6 +88,7 @@ class Stop_Model extends Model_Abstract
             'title'                 => __('Title', 'rideshare'),
             'type'                  => __('Type', 'rideshare'),
             'description'           => __('Description', 'rideshare'),
+            'location_id'           => __('Location', 'rideshare'),
         );
     }
 
@@ -106,6 +107,7 @@ class Stop_Model extends Model_Abstract
             'title'                 => 'text',
             'type'                  => 'text',
             'description'           => 'textarea',
+            'location_id'           => 'select',
         );
     }
 
