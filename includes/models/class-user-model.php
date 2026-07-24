@@ -101,6 +101,7 @@ class User_Model extends Model_Abstract
             'cell'                  => __('Cell', 'rideshare'),
             'identity_card_number'  => __('Identity Card Number', 'rideshare'),
             'identity_card_validity' => __('Identity Card Validity', 'rideshare'),
+            'location_id'           => __('Location', 'rideshare'),
         );
     }
 
@@ -125,6 +126,7 @@ class User_Model extends Model_Abstract
             'cell'                  => 'tel',
             'identity_card_number'  => 'text',
             'identity_card_validity' => 'date',
+            'location_id'           => 'autocomplete',
         );
     }
 

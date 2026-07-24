@@ -107,7 +107,7 @@ class Stop_Model extends Model_Abstract
             'title'                 => 'text',
             'type'                  => 'text',
             'description'           => 'textarea',
-            'location_id'           => 'select',
+            'location_id'           => 'autocomplete',
         );
     }
 
