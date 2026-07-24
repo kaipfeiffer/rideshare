@@ -75,7 +75,11 @@ class User_Controller extends Controller_Abstract
             'identity_card_validity' => array(
                 'type' => 'date',
                 'label'    => __('Identity Card Validity', 'rideshare')
-            )
+            ),
+            'location_id' => array(
+                'type' => 'autocomplete',
+                'label'  => __('Location', 'rideshare')
+            ),
         );
         return $columns;
     }
