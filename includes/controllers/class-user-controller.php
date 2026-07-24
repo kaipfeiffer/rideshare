@@ -6,8 +6,6 @@ if (!defined('WPINC')) {
     die;
 }
 
-use \Kaipfeiffer\Tramp\Controllers\UserController;
-
 /**
  * controller for locations
  *

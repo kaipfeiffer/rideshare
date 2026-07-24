@@ -5,8 +5,6 @@ if (!defined('WPINC')) {
     die;
 }
 
-use \Kaipfeiffer\Tramp\Controllers\LocationController;
-
 /**
  * controller for locations
  *
