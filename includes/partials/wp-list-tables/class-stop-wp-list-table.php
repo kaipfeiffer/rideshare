@@ -8,28 +8,7 @@ if (!defined('ABSPATH')) {
 
 class Stop_WP_List_Table extends WP_List_Table_Abstract
 {
-    function column_default($item, $column_name)
-    {
-        switch ($column_name) {
-            case 'birthday':
-            case 'identity_card_validity':
-                return preg_replace('/(\d{4}).(\d{2}).(\d{2})/', __('$3.$2.$1', 'rideshare'), $item[$column_name]);
-            default:
-                return parent::column_default($item, $column_name);
-        }
-    }
-
-    // function get_columns()
-    // {
-    //     $columns = parent::get_columns();
-    //     unset($columns['title']);
-
-    //     $columns    = array('fullname' => __('Name', 'rideshare')) + $columns;
-    //     return $columns;
-    // }
-
-
-    function column_fullname($item)
+    function column_title($item)
     {
         $name = sprintf(
             '%1$s',
