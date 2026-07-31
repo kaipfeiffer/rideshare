@@ -8,6 +8,13 @@ if (!defined('ABSPATH')) {
 
 class Stop_WP_List_Table extends WP_List_Table_Abstract
 {
+    function column_type($item)
+    {
+        $label = Stop_Type_Controller::get_stop_type_label($item['type'] ?? null);
+
+        return htmlspecialchars($label ?: ($item['type'] ?? ''));
+    }
+
     function column_title($item)
     {
         $name = sprintf(

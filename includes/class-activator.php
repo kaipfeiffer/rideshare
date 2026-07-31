@@ -27,6 +27,7 @@ class Activator
 		'Location_Model',
 		'Riding_Model',
 		'User_Model',
+		'Stop_Type_Model',
 		'Stop_Model',
 	);
 
