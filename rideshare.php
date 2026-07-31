@@ -349,6 +349,90 @@ class RidesharePlugin
 	protected static function public_hooks()
 	{
 		add_action('init', array(__CLASS__, 'init'));
+		add_filter('rest_user_query', array(__CLASS__, 'exclude_rideshare_users_from_rest_query'), 10, 2);
+		add_filter('rest_request_before_callbacks', array(__CLASS__, 'block_rideshare_user_rest_item'), 10, 3);
+	}
+
+	static function exclude_rideshare_users_from_rest_query($prepared_args, $request)
+	{
+		$prepared_args['role__not_in'] = array_unique(array_merge(
+			(array) ($prepared_args['role__not_in'] ?? array()),
+			static::get_rideshare_user_roles()
+		));
+
+		$prepared_args['exclude'] = array_unique(array_merge(
+			array_map('intval', (array) ($prepared_args['exclude'] ?? array())),
+			static::get_rideshare_user_ids()
+		));
+
+		return $prepared_args;
+	}
+
+	static function block_rideshare_user_rest_item($response, $handler, $request)
+	{
+		if (null !== $response) {
+			return $response;
+		}
+
+		if (!is_object($request) || !method_exists($request, 'get_route')) {
+			return $response;
+		}
+
+		$route = $request->get_route();
+		$user_id = '/wp/v2/users/me' === $route ? get_current_user_id() : intval($request['id'] ?? 0);
+
+		if (!$user_id || !preg_match('#^/wp/v2/users/(\d+|me)$#', $route)) {
+			return $response;
+		}
+
+		if (!static::is_rideshare_user($user_id)) {
+			return $response;
+		}
+
+		return new \WP_Error(
+			'rideshare_rest_user_hidden',
+			__('User not found.', 'rideshare'),
+			array('status' => 404)
+		);
+	}
+
+	protected static function get_rideshare_user_roles(): array
+	{
+		return array(
+			'rideshare_partner',
+			'rideshare_user',
+		);
+	}
+
+	protected static function get_rideshare_user_ids(): array
+	{
+		global $wpdb;
+
+		$meta_key_like = $wpdb->esc_like('_is_tramp_user');
+		$sql = $wpdb->prepare(
+			"SELECT DISTINCT user_id
+			FROM {$wpdb->usermeta}
+			WHERE meta_key LIKE %s
+				AND meta_value IN ('1', 'on', 'true', 'yes')",
+			'%' . $meta_key_like
+		);
+
+		return array_map('intval', $wpdb->get_col($sql));
+	}
+
+	protected static function is_rideshare_user($user_id): bool
+	{
+		$user = get_userdata($user_id);
+
+		if (!$user) {
+			return false;
+		}
+
+		if (array_intersect(static::get_rideshare_user_roles(), $user->roles)) {
+			return true;
+		}
+
+		return in_array($user_id, static::get_rideshare_user_ids(), true);
 	}
 
 
