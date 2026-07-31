@@ -20,7 +20,7 @@ abstract class Admin_List_Subpage_Abstract extends AdminListSubpageAbstract
 {
     const ADMIN_SUBPAGE_SLUG = '';
 
-    const AJAX_METHODS = array('ajax_response');
+    const AJAX_METHODS = array('ajax_response', 'ajax_rows', 'ajax_column_headers', 'ajax_navigation');
 
     const CLASS_NAME = '';
 
