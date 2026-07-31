@@ -58,6 +58,10 @@ class Admin implements AjaxInterface
      */
     const NONCE = 'rideshare_Admin';
 
+    const SETTINGS_ACTION = 'rideshare_save_settings';
+
+    const SETTINGS_NONCE_FIELD = 'rideshare_settings_nonce';
+
 
 
     /** 
@@ -371,9 +375,17 @@ class Admin implements AjaxInterface
         ));
         $slug = 'start';
         $content = '';
-        if (file_exists(Settings::PLUGIN_DIR_PATH . '/admin/templates/admin-start-template.php')) {
+        $start_template_file = implode(DIRECTORY_SEPARATOR, array(
+            Settings::PLUGIN_DIR_PATH,
+            'includes',
+            'admin',
+            'templates',
+            'admin-start-template.php'
+        ));
+
+        if (file_exists($start_template_file)) {
             ob_start();
-            include_once Settings::PLUGIN_DIR_PATH . '/admin/templates/admin-start-template.php';
+            include_once $start_template_file;
             $content = ob_get_clean();
         }
         $tabs[] = sprintf(
@@ -412,6 +424,7 @@ class Admin implements AjaxInterface
 
         $template_file  = implode(DIRECTORY_SEPARATOR, array(
             Settings::PLUGIN_DIR_PATH,
+            'includes',
             'admin',
             'templates',
             'admin-template.php'
@@ -439,6 +452,7 @@ class Admin implements AjaxInterface
      */
     static public function display_admin_page()
     {
+        static::handle_settings_request();
 
         foreach (static::$tabs as $entry) {
 
@@ -451,6 +465,28 @@ class Admin implements AjaxInterface
         }
         static::enqueue_scripts();
         static::display();
+    }
+
+    protected static function handle_settings_request()
+    {
+        if (($_POST['rideshare_settings_action'] ?? '') !== static::SETTINGS_ACTION) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        if (!isset($_POST[static::SETTINGS_NONCE_FIELD]) || !wp_verify_nonce($_POST[static::SETTINGS_NONCE_FIELD], static::SETTINGS_ACTION)) {
+            add_settings_error('rideshare_settings', 'rideshare_settings_nonce_failed', __('Settings could not be saved.', 'rideshare'));
+            return;
+        }
+
+        $option_name = RidesharePlugin::get_rest_user_filter_option_name();
+        $enabled = isset($_POST[$option_name]) ? '1' : '0';
+
+        update_option($option_name, $enabled, false);
+        add_settings_error('rideshare_settings', 'rideshare_settings_saved', __('Settings saved.', 'rideshare'), 'updated');
     }
 
 

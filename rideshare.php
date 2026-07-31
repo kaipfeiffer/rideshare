@@ -29,6 +29,8 @@ class RidesharePlugin
 {
 	const PLUGIN_PREFIX 		= 'kprs_';
 
+	const REST_USER_FILTER_OPTION = 'hide_rideshare_users_in_rest';
+
 	/**
 	 * $is_loaded
 	 * 
@@ -349,8 +351,24 @@ class RidesharePlugin
 	protected static function public_hooks()
 	{
 		add_action('init', array(__CLASS__, 'init'));
-		add_filter('rest_user_query', array(__CLASS__, 'exclude_rideshare_users_from_rest_query'), 10, 2);
-		add_filter('rest_request_before_callbacks', array(__CLASS__, 'block_rideshare_user_rest_item'), 10, 3);
+
+		if (static::rideshare_rest_user_filter_enabled()) {
+			add_filter('rest_user_query', array(__CLASS__, 'exclude_rideshare_users_from_rest_query'), 10, 2);
+			add_filter('rest_request_before_callbacks', array(__CLASS__, 'block_rideshare_user_rest_item'), 10, 3);
+		}
+	}
+
+	static function get_rest_user_filter_option_name(): string
+	{
+		return static::PLUGIN_PREFIX . static::REST_USER_FILTER_OPTION;
+	}
+
+	static function rideshare_rest_user_filter_enabled(): bool
+	{
+		return (bool) apply_filters(
+			'rideshare_rest_user_filter_enabled',
+			(bool) get_option(static::get_rest_user_filter_option_name(), true)
+		);
 	}
 
 	static function exclude_rideshare_users_from_rest_query($prepared_args, $request)
