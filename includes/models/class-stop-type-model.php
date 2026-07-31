@@ -37,7 +37,7 @@ class Stop_Type_Model extends Model_Abstract
     static function get_labels(): array
     {
         return array(
-            'title' => __('Title', 'rideshare'),
+            'title' => __('Stop Type', 'rideshare'),
         );
     }
 
