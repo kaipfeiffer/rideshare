@@ -14,7 +14,7 @@ if (!defined('WPINC')) {
  * @version        1.0.0
  * @author        Kai Pfeiffer
  */
-class Stop_Subpage extends Admin_Subpage_Abstract{
+class Stop_Subpage extends Admin_List_Subpage_Abstract{
 
     const ADMIN_SUBPAGE_SLUG = 'stop';
 
