@@ -29,7 +29,7 @@ class Stop_Model extends Model_Abstract
         'id'                    => '%d',
         'location_id'           => '%d',
 		'title'                 => '%s',
-		'type'                  => '%s',
+		'type'                  => '%d',
 		'description'           => '%s',
         'created'               => '%s',
         'updated'               => '%s',
@@ -105,7 +105,7 @@ class Stop_Model extends Model_Abstract
     {
         return array(
             'title'                 => 'text',
-            'type'                  => 'text',
+            'type'                  => 'select',
             'description'           => 'textarea',
             'location_id'           => 'autocomplete',
         );
@@ -125,11 +125,14 @@ class Stop_Model extends Model_Abstract
 
         $table_name = static::get_table_name();
 
+        # Diese Methode kann entfernt werden, wenn dalle Entwicklungsumgebungen angepasst sind
+        static::migrate_type_titles_to_ids();
+
         $sql = "CREATE TABLE $table_name (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             location_id bigint(20) UNSIGNED DEFAULT NULL,
 		    title varchar(100) DEFAULT NULL,
-		    type varchar(100) DEFAULT NULL,
+		    type bigint(20) UNSIGNED DEFAULT NULL,
 		    description varchar(500) DEFAULT NULL,
             created datetime DEFAULT NULL,
             updated datetime DEFAULT NULL,
@@ -142,5 +145,36 @@ class Stop_Model extends Model_Abstract
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
+    }
+
+    protected static function migrate_type_titles_to_ids(): void
+    {
+        global $wpdb;
+
+        $stop_table = static::get_table_name();
+        $stop_type_table = Stop_Type_Model::get_table_name();
+
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $stop_table)) !== $stop_table) {
+            return;
+        }
+
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $stop_type_table)) !== $stop_type_table) {
+            return;
+        }
+
+        $stop_types = $wpdb->get_results(
+            "SELECT id, title FROM `{$stop_type_table}` WHERE deleted IS NULL OR deleted = ''",
+            ARRAY_A
+        );
+
+        foreach ($stop_types as $stop_type) {
+            $wpdb->update(
+                $stop_table,
+                array('type' => intval($stop_type['id'])),
+                array('type' => $stop_type['title']),
+                array('%d'),
+                array('%s')
+            );
+        }
     }
 }
