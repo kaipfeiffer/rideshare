@@ -27,7 +27,7 @@
                                 value="1"
                                 <?php checked(\KaiPfeiffer\Rideshare\RidesharePlugin::rideshare_rest_user_filter_enabled()); ?>
                             >
-                            <?php echo esc_html__('Rideshare users in der WordPress REST API ausblenden', 'rideshare'); ?>
+                            <?php echo esc_html__('Remove rideshare users in the WordPress REST API', 'rideshare'); ?>
                         </label>
                     </td>
                 </tr>
