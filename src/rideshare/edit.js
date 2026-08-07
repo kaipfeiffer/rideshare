@@ -32,10 +32,10 @@ import './editor.scss';
 export default function Edit() {
 	return (
 		<div { ...useBlockProps( { className: 'rideshare-riding-widget' } ) }>
-			<h2>{ __( 'Mitfahrgelegenheit', 'rideshare' ) }</h2>
+			<h2>{ __( 'Ride sharing', 'rideshare' ) }</h2>
 			<div className="rideshare-riding-widget__preview">
-				<p>{ __( 'Frontend-Widget für Rideshare-Nutzer, die Mitfahrgelegenheiten suchen oder anbieten möchten.', 'rideshare' ) }</p>
-				<p>{ __( 'Ziele werden aus Stop_Model geladen und Anfragen in Riding_Model gespeichert.', 'rideshare' ) }</p>
+				<p>{ __( 'Frontend widget for rideshare users who want to search for or offer rides.', 'rideshare' ) }</p>
+				<p>{ __( 'Destinations are loaded from Stop_Model and requests are stored in Riding_Model.', 'rideshare' ) }</p>
 			</div>
 		</div>
 	);
