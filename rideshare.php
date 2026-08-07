@@ -248,7 +248,8 @@ class RidesharePlugin
 	 */
 	static function init()
 	{
-		// $loaded = load_plugin_textdomain('rideshare', false, dirname(plugin_basename(__FILE__)) . '/languages');
+		// static::load_textdomains();
+
 		$post_types = self::get_post_types();
 
 		foreach ($post_types as $post_type => $args) {
@@ -257,6 +258,21 @@ class RidesharePlugin
 		}
 
 		static::register_blocks();
+	}
+
+	protected static function load_textdomains(): void
+	{
+		load_plugin_textdomain(
+			'rideshare',
+			false,
+			dirname(plugin_basename(__FILE__)) . '/languages'
+		);
+
+		load_plugin_textdomain(
+			'wpbase',
+			false,
+			dirname(plugin_basename(__FILE__)) . '/vendor/kaipfeiffer/wpbase/languages'
+		);
 	}
 
 	static function register_blocks(): void
