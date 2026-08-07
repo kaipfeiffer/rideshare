@@ -53,12 +53,12 @@ abstract class Admin_List_Subpage_Abstract extends AdminListSubpageAbstract
 
     static function get_js_handle($postfix = 'admin_subpage')
     {
-        return Settings::PLUGIN_NAME . '_' . $postfix;
+        return strtolower(Settings::PLUGIN_NAME) . '_' . $postfix;
     }
 
     static function get_js_url()
     {
-        return Settings::PLUGIN_URL . implode(DIRECTORY_SEPARATOR, array('includes', 'admin', 'assets', 'js', 'wp-list-class-ajax.js'));
+        return Settings::PLUGIN_URL . implode(DIRECTORY_SEPARATOR, array('vendor', 'kaipfeiffer', 'wpbase', 'public', 'assets', 'js', 'wp-list-class-ajax.js'));
     }
 
     static function get_js_version()
