@@ -172,6 +172,20 @@ class Admin implements AjaxInterface
         return get_user_meta($user_id, $blog_id . '_is_tramp_user', true);
     }
 
+    static protected function user_has_rideshare_role($user_id): bool
+    {
+        $user = get_userdata($user_id);
+
+        if (!$user) {
+            return false;
+        }
+
+        return (bool) array_intersect(
+            array('rideshare_partner', 'rideshare_user'),
+            (array) $user->roles
+        );
+    }
+
     static protected function get_labels()
     {
         $labels = array(
@@ -658,40 +672,47 @@ class Admin implements AjaxInterface
         if (!current_user_can('edit_user', $user_id))
             return false;
 
-        $is_tramp_user =  $sanitized  = 'on' === $_POST['is_tramp_user'];
-        if ($is_tramp_user) {
-            $location_columns = $_POST['tramp_location'];
-            $user_columns = $_POST['tramp_user'];
-
-            $missing_location_columns = Location_Controller::check($location_columns);
-            $missing_user_columns = User_Controller::check($user_columns);
-
-            $missings = array_merge($missing_location_columns, $missing_user_columns);
-
-            if (!count($missings)) {
-                if (!isset($location_columns['id']) || empty($location_columns['id'])) {
-                    $tramp_location_data    = Location_Controller::create($location_columns);
-                    $tramp_location_id      = $tramp_location_data[Location_Controller::get_primary_key()];
-                    static::set_tramp_location_id_meta($user_id, $tramp_location_id);
-                } else {
-                    $location_columns = Location_Controller::update($location_columns);
-                    $tramp_location_id = $location_columns['id'];
-                }
-
-                $user_columns['location_id']    = $tramp_location_id;
-                if (!isset($user_columns['id']) || empty($user_columns['id'])) {
-                    $tramp_user_data    = User_Controller::create($user_columns);
-                    $tramp_user_id      = $tramp_user_data[User_Controller::get_primary_key()];
-                    static::set_tramp_user_id_meta($user_id, $tramp_user_id);
-                } else {
-                    $user_columns = User_Controller::update($user_columns);
-                    $tramp_user_id = $user_columns['id'];
-                }
-            }
-            error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($missings, 1));
+        if (!static::user_has_rideshare_role($user_id)) {
+            return false;
         }
 
-        $result = static::set_is_tramp_user_meta($user_id, $sanitized);
+        if (empty($_POST['tramp_location']) || empty($_POST['tramp_user'])) {
+            return false;
+        }
+
+        $location_columns = wp_unslash($_POST['tramp_location']);
+        $user_columns = wp_unslash($_POST['tramp_user']);
+
+        $missing_location_columns = Location_Controller::check($location_columns);
+        $missing_user_columns = User_Controller::check($user_columns);
+
+        $missings = array_merge($missing_location_columns, $missing_user_columns);
+
+        if (count($missings)) {
+            error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($missings, 1));
+            return false;
+        }
+
+        if (!isset($location_columns['id']) || empty($location_columns['id'])) {
+            $tramp_location_data = Location_Controller::create($location_columns);
+            $tramp_location_id = $tramp_location_data[Location_Controller::get_primary_key()];
+            static::set_tramp_location_id_meta($user_id, $tramp_location_id);
+        } else {
+            $location_columns = Location_Controller::update($location_columns);
+            $tramp_location_id = $location_columns['id'];
+        }
+
+        $user_columns['location_id'] = $tramp_location_id;
+        if (!isset($user_columns['id']) || empty($user_columns['id'])) {
+            $tramp_user_data = User_Controller::create($user_columns);
+            $tramp_user_id = $tramp_user_data[User_Controller::get_primary_key()];
+            static::set_tramp_user_id_meta($user_id, $tramp_user_id);
+        } else {
+            $user_columns = User_Controller::update($user_columns);
+            $tramp_user_id = $user_columns['id'];
+        }
+
+        return true;
     }
 
 
@@ -707,31 +728,34 @@ class Admin implements AjaxInterface
     static public function show_tramp_user_data($user)
     {
         error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> SHOW_TRAMP_USER_DATA');
-        $is_tramp_user = static::get_is_tramp_user_meta($user->ID);
-        if ($is_tramp_user) {
-            $tramp_location_id  = static::get_tramp_location_id_meta($user->ID);
-            $tramp_user_id      = static::get_tramp_user_id_meta($user->ID);
-
-            if ($tramp_user_id ?? null) {
-                $user_columns = User_Controller::read($tramp_user_id);
-                if(array_is_list($user_columns)) {
-                    $user_columns = array_shift($user_columns);
-                }
-            } else {
-                $user_columns = User_Controller::get_columns();
-            }
-            
-            if ($tramp_location_id ?? null) {
-                $location_columns = Location_Controller::read($tramp_location_id);
-                if(array_is_list($location_columns)) {
-                    $location_columns = array_shift($location_columns);
-                }
-            } else {
-                $location_columns = Location_Controller::get_columns();
-            }
-            error_log(__CLASS__ . '->' . __LINE__ . '->' . $tramp_user_id . ':' . print_r($user_columns, 1));
-            $user_columns['email']  = $user_columns['email'] ? $user_columns['email'] : $user->user_email;
+        if (!static::user_has_rideshare_role($user->ID)) {
+            return;
         }
+
+        $tramp_location_id = static::get_tramp_location_id_meta($user->ID);
+        $tramp_user_id = static::get_tramp_user_id_meta($user->ID);
+
+        if ($tramp_user_id ?? null) {
+            $user_columns = User_Controller::read($tramp_user_id);
+            if (array_is_list($user_columns)) {
+                $user_columns = array_shift($user_columns);
+            }
+        } else {
+            $user_columns = User_Controller::get_columns();
+        }
+
+        if ($tramp_location_id ?? null) {
+            $location_columns = Location_Controller::read($tramp_location_id);
+            if (array_is_list($location_columns)) {
+                $location_columns = array_shift($location_columns);
+            }
+        } else {
+            $location_columns = Location_Controller::get_columns();
+        }
+
+        error_log(__CLASS__ . '->' . __LINE__ . '->' . $tramp_user_id . ':' . print_r($user_columns, 1));
+        $user_columns['email'] = $user_columns['email'] ? $user_columns['email'] : $user->user_email;
+
         $labels = static::get_labels();
         $input_types    = array(
             'givenname' => 'text',
