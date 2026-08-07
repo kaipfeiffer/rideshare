@@ -75,7 +75,70 @@
 		}),
 	]);
 
-	const render_offers = (state) => {
+	const get_booking_data = (item, state) => {
+		const data = new FormData();
+		data.set('action', state.booking_action);
+		data.set('nonce', state.booking_nonce);
+		data.set('rideshare_riding_id', item.id);
+		data.set('rideshare_booking_seats', 1);
+
+		return data;
+	};
+
+	const book_riding = async (item, state, set_state) => {
+		set_state({ booking_busy: item.id, notice: null });
+
+		try {
+			const response = await fetch(state.ajax_url, {
+				method: 'POST',
+				credentials: 'same-origin',
+				body: get_booking_data(item, state),
+			});
+			const payload = await response.json();
+			const data = payload.data || {};
+
+			if (!payload.success) {
+				set_state({
+					booking_busy: null,
+					riding_items: data.riding_items || state.riding_items,
+					notice: { type: 'error', message: data.message || '' },
+				});
+				return;
+			}
+
+			set_state({
+				booking_busy: null,
+				riding_items: data.riding_items || state.riding_items,
+				notice: { type: 'success', message: data.message || '' },
+			});
+		} catch (error) {
+			set_state({
+				booking_busy: null,
+				notice: { type: 'error', message: error.message },
+			});
+		}
+	};
+
+	const render_booking_action = (item, state, set_state) => {
+		if (!state.can_create || item.type !== 'offer') {
+			return null;
+		}
+
+		const is_busy = Number(state.booking_busy) === Number(item.id);
+		const label = is_busy ? state.labels.booking : (item.booking_status_label || state.labels.book);
+
+		return create_element('div', { className: 'rideshare-riding-widget__booking-actions' }, [
+			create_element('button', {
+				className: 'rideshare-riding-widget__secondary-button',
+				type: 'button',
+				disabled: is_busy || !item.can_book,
+				text: label,
+				onClick: () => book_riding(item, state, set_state),
+			}),
+		]);
+	};
+
+	const render_offers = (state, set_state) => {
 		const labels = state.labels;
 		const children = [
 			create_element('h3', { text: labels.rides }),
@@ -129,6 +192,7 @@
 										create_element('dd', { text: item.description }),
 									]) : null,
 								]),
+								render_booking_action(item, state, set_state),
 							]),
 						]),
 					]
@@ -287,6 +351,7 @@
 		state = {
 			...state,
 			busy: false,
+			booking_busy: null,
 			mode: null,
 			notice: null,
 		};
@@ -303,7 +368,7 @@
 				render_notice(state.notice?.message, state.notice?.type),
 				!state.can_create ? render_login_prompt(state) : null,
 				state.mode && state.can_create ? render_form(state, set_state) : null,
-				render_offers(state),
+				render_offers(state, set_state),
 				state.can_create ? create_element('div', { className: 'rideshare-riding-widget__actions' }, [
 					create_element('button', {
 						className: 'rideshare-riding-widget__submit',

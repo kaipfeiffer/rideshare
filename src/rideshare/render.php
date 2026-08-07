@@ -67,6 +67,18 @@ $labels = $initial_data['labels'];
                                             </div>
                                         <?php endif; ?>
                                     </dl>
+                                    <?php if ($can_use && 'offer' === $item['type']) : ?>
+                                        <div class="rideshare-riding-widget__booking-actions">
+                                            <button
+                                                class="rideshare-riding-widget__secondary-button"
+                                                type="button"
+                                                data-rideshare-book-riding="<?php echo esc_attr($item['id']); ?>"
+                                                <?php disabled(empty($item['can_book'])); ?>
+                                            >
+                                                <?php echo esc_html($item['booking_status_label'] ?: $labels['book']); ?>
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </details>
                         </li>

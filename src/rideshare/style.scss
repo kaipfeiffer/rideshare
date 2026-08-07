@@ -254,6 +254,13 @@
 	margin: 0;
 }
 
+.rideshare-riding-widget__booking-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	margin-top: 0.75rem;
+}
+
 .rideshare-riding-widget__empty {
 	color: #50575e;
 	margin: 0;

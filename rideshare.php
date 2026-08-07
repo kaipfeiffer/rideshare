@@ -31,6 +31,10 @@ class RidesharePlugin
 
 	const REST_USER_FILTER_OPTION = 'hide_rideshare_users_in_rest';
 
+	const BOOKINGS_DB_VERSION_OPTION = 'bookings_db_version';
+
+	const BOOKINGS_DB_VERSION = '1';
+
 	/**
 	 * $is_loaded
 	 * 
@@ -248,7 +252,8 @@ class RidesharePlugin
 	 */
 	static function init()
 	{
-		// static::load_textdomains();
+		static::load_textdomains();
+		static::ensure_booking_table();
 
 		$post_types = self::get_post_types();
 
@@ -273,6 +278,18 @@ class RidesharePlugin
 			false,
 			dirname(plugin_basename(__FILE__)) . '/vendor/kaipfeiffer/wpbase/languages'
 		);
+	}
+
+	protected static function ensure_booking_table(): void
+	{
+		$option_name = static::PLUGIN_PREFIX . static::BOOKINGS_DB_VERSION_OPTION;
+
+		if (static::BOOKINGS_DB_VERSION === get_option($option_name)) {
+			return;
+		}
+
+		Booking_Model::db_delta();
+		update_option($option_name, static::BOOKINGS_DB_VERSION);
 	}
 
 	static function register_blocks(): void
@@ -384,6 +401,8 @@ class RidesharePlugin
 		add_action('init', array(__CLASS__, 'init'));
 		add_action('wp_ajax_rideshare_save_riding_request', array(Riding_Controller::class, 'ajax_save_request'));
 		add_action('wp_ajax_nopriv_rideshare_save_riding_request', array(Riding_Controller::class, 'ajax_save_request'));
+		add_action('wp_ajax_rideshare_book_riding', array(Booking_Controller::class, 'ajax_create_booking'));
+		add_action('wp_ajax_nopriv_rideshare_book_riding', array(Booking_Controller::class, 'ajax_create_booking'));
 
 		if (static::rideshare_rest_user_filter_enabled()) {
 			add_filter('rest_user_query', array(__CLASS__, 'exclude_rideshare_users_from_rest_query'), 10, 2);

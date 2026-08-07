@@ -36,9 +36,11 @@ class Riding_Controller extends Controller_Abstract
         return array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'action' => 'rideshare_save_riding_request',
+            'booking_action' => 'rideshare_book_riding',
             'can_create' => static::current_user_can_create_request(),
             'login_url' => wp_login_url(static::get_current_url()),
             'nonce' => wp_create_nonce('rideshare_riding_request_save'),
+            'booking_nonce' => wp_create_nonce(Booking_Controller::NONCE),
             'stops' => static::format_stops_for_client(Stop_Controller::get_active_items()),
             'riding_items' => static::get_riding_items(),
             'labels' => static::get_client_labels(),
@@ -287,16 +289,26 @@ class Riding_Controller extends Controller_Abstract
     protected static function format_riding_for_client(array $item): array
     {
         $type = !empty($item['driver_id']) ? 'offer' : 'request';
+        $riding_id = intval($item['id'] ?? 0);
+        $capacity = intval($item['passengers'] ?? 0);
+        $booked_seats = 'offer' === $type ? Booking_Controller::get_booked_seats($riding_id) : 0;
+        $available_seats = 'offer' === $type ? max(0, $capacity - $booked_seats) : $capacity;
+        $current_user_id = get_current_user_id();
+        $has_booking = 'offer' === $type && Booking_Controller::user_has_active_booking($riding_id, $current_user_id);
+        $can_book = static::current_user_can_book_riding($item, $available_seats, $has_booking, $current_user_id);
 
         return array(
-            'id' => intval($item['id'] ?? 0),
+            'id' => $riding_id,
             'type' => $type,
             'type_label' => 'offer' === $type ? __('Offer', 'rideshare') : __('Request', 'rideshare'),
             'origin_id' => intval($item['origin_id'] ?? 0),
             'origin_label' => Stop_Controller::get_item_label(intval($item['origin_id'] ?? 0)),
             'destination_id' => intval($item['destination_id'] ?? 0),
             'destination_label' => Stop_Controller::get_item_label(intval($item['destination_id'] ?? 0)),
-            'passengers' => intval($item['passengers'] ?? 0),
+            'passengers' => $available_seats,
+            'capacity' => $capacity,
+            'booked_seats' => $booked_seats,
+            'available_seats' => $available_seats,
             'description' => $item['description'] ?? '',
             'start_date' => $item['start_date'] ?? '',
             'start_label' => static::format_datetime_display_value($item['start_date'] ?? ''),
@@ -304,7 +316,43 @@ class Riding_Controller extends Controller_Abstract
             'end_label' => static::format_datetime_display_value($item['end_date'] ?? ''),
             'period_label' => static::format_period_label($item['start_date'] ?? '', $item['end_date'] ?? ''),
             'passengers_label' => 'offer' === $type ? __('Available seats', 'rideshare') : __('Number of passengers', 'rideshare'),
+            'can_book' => $can_book,
+            'booking_status_label' => static::get_booking_status_label($item, $available_seats, $has_booking, $current_user_id),
         );
+    }
+
+    protected static function current_user_can_book_riding(array $item, int $available_seats, bool $has_booking, int $current_user_id): bool
+    {
+        if (!$current_user_id || !static::current_user_can_create_request()) {
+            return false;
+        }
+
+        if (empty($item['driver_id']) || $has_booking || 1 > $available_seats) {
+            return false;
+        }
+
+        return intval($item['driver_id']) !== $current_user_id;
+    }
+
+    protected static function get_booking_status_label(array $item, int $available_seats, bool $has_booking, int $current_user_id): string
+    {
+        if (empty($item['driver_id'])) {
+            return '';
+        }
+
+        if ($current_user_id && intval($item['driver_id']) === $current_user_id) {
+            return __('Own offer', 'rideshare');
+        }
+
+        if ($has_booking) {
+            return __('Booked', 'rideshare');
+        }
+
+        if (1 > $available_seats) {
+            return __('Fully booked', 'rideshare');
+        }
+
+        return __('Book', 'rideshare');
     }
 
     protected static function format_period_label(string $start_date, string $end_date): string
@@ -389,6 +437,10 @@ class Riding_Controller extends Controller_Abstract
             'login' => __('Sign in', 'rideshare'),
             'no_stops' => __('No destinations are available yet.', 'rideshare'),
             'saving' => __('Saving...', 'rideshare'),
+            'book' => __('Book', 'rideshare'),
+            'booking' => __('Booking...', 'rideshare'),
+            'booked' => __('Booked', 'rideshare'),
+            'fully_booked' => __('Fully booked', 'rideshare'),
         );
     }
 }

@@ -26,6 +26,7 @@ class Activator
 	static $models	= array(
 		'Location_Model',
 		'Riding_Model',
+		'Booking_Model',
 		'User_Model',
 		'Stop_Type_Model',
 		'Stop_Model',
