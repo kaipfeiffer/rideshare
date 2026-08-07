@@ -14,4 +14,6 @@ if (!defined('ABSPATH')) {
  * @since   1.0.0 
  */
 class JWT_Singleton extends \KaiPfeiffer\WPBase\Singletons\JWTSingleton
-{}
+{
+    protected $subject = 'rideshare';
+}
