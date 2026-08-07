@@ -118,6 +118,8 @@ class RidesharePlugin
 		add_action('show_user_profile', array(static::class, 'Admin__show_tramp_user_data'));
 		add_action('edit_user_profile_update', array(static::class, 'Admin__save_tramp_user_data'));
 		add_action('admin_menu', array(static::class, 'Admin__admin_menu'));
+		add_action('admin_init', array(static::class, 'Admin__init'));
+		add_filter('set-screen-option', array(static::class, 'Admin__set_screen_option'), 10, 3);
 		if ((defined('DOING_AJAX') && DOING_AJAX) || wp_is_json_request()) {
 			foreach (static::$json_classes  as $class) {
 				if (is_callable(array($class, 'init_json'))) {

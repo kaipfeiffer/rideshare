@@ -342,7 +342,6 @@ class Admin implements AjaxInterface
         return null;
     }
 
-
     /**
      * display
      * 
@@ -515,8 +514,6 @@ class Admin implements AjaxInterface
         $page_slug      = Settings::PLUGIN_NAME . '_' . self::ADMIN_PAGE_SLUG;
         // error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> INIT Backend');
 
-        add_action('admin_menu', array(__CLASS__, 'admin_menu'));
-
         if (isset($_GET['page']) && $page_slug  === $_GET['page']) {
             // error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> INIT tabS');
             foreach (static::$tabs as $entry) {
@@ -553,6 +550,24 @@ class Admin implements AjaxInterface
             }
         }
         return null;
+    }
+
+    static public function set_screen_option($status, $option, $value)
+    {
+        foreach (static::$sub_pages as $sub_page) {
+            $set_screen_option = array(__NAMESPACE__ . '\\' . $sub_page, 'set_screen_option');
+
+            if (!is_callable($set_screen_option)) {
+                continue;
+            }
+
+            $screen_option = call_user_func($set_screen_option, $status, $option, $value);
+            if ($screen_option !== $status) {
+                return $screen_option;
+            }
+        }
+
+        return $status;
     }
 
 
