@@ -18,17 +18,6 @@ $labels = $initial_data['labels'];
     <div class="rideshare-riding-widget__server-content">
         <h2><?php echo esc_html($labels['title']); ?></h2>
 
-        <?php if ($can_use) : ?>
-            <div class="rideshare-riding-widget__actions">
-                <button class="rideshare-riding-widget__submit" type="button" data-rideshare-open-request="offer">
-                    <?php echo esc_html($labels['create_offer']); ?>
-                </button>
-                <button class="rideshare-riding-widget__secondary-button" type="button" data-rideshare-open-request="search">
-                    <?php echo esc_html($labels['create_request']); ?>
-                </button>
-            </div>
-        <?php endif; ?>
-
         <?php if (!$can_use) : ?>
             <div class="rideshare-riding-widget__notice rideshare-riding-widget__notice--info rideshare-riding-widget__login-prompt">
                 <p><?php echo esc_html($labels['login_required']); ?></p>
@@ -62,7 +51,7 @@ $labels = $initial_data['labels'];
                                 <div class="rideshare-riding-widget__ride-details">
                                     <dl>
                                         <div>
-                                            <dt><?php echo esc_html__('Typ', 'rideshare'); ?></dt>
+                                            <dt><?php echo esc_html__('Type', 'rideshare'); ?></dt>
                                             <dd><?php echo esc_html($item['type_label']); ?></dd>
                                         </div>
                                         <?php if (!empty($item['passengers'])) : ?>
@@ -73,7 +62,7 @@ $labels = $initial_data['labels'];
                                         <?php endif; ?>
                                         <?php if (!empty($item['description'])) : ?>
                                             <div>
-                                                <dt><?php echo esc_html__('Hinweis', 'rideshare'); ?></dt>
+                                                <dt><?php echo esc_html__('Note', 'rideshare'); ?></dt>
                                                 <dd><?php echo esc_html($item['description']); ?></dd>
                                             </div>
                                         <?php endif; ?>
@@ -85,6 +74,17 @@ $labels = $initial_data['labels'];
                 </ol>
             <?php endif; ?>
         </section>
+
+        <?php if ($can_use) : ?>
+            <div class="rideshare-riding-widget__actions">
+                <button class="rideshare-riding-widget__submit" type="button" data-rideshare-open-request="offer">
+                    <?php echo esc_html($labels['create_offer']); ?>
+                </button>
+                <button class="rideshare-riding-widget__secondary-button" type="button" data-rideshare-open-request="search">
+                    <?php echo esc_html($labels['create_request']); ?>
+                </button>
+            </div>
+        <?php endif; ?>
     </div>
 
     <script type="application/json" class="rideshare-riding-widget__data">

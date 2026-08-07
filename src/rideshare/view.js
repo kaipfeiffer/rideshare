@@ -301,6 +301,9 @@
 			const children = [
 				create_element('h2', { text: labels.title }),
 				render_notice(state.notice?.message, state.notice?.type),
+				!state.can_create ? render_login_prompt(state) : null,
+				state.mode && state.can_create ? render_form(state, set_state) : null,
+				render_offers(state),
 				state.can_create ? create_element('div', { className: 'rideshare-riding-widget__actions' }, [
 					create_element('button', {
 						className: 'rideshare-riding-widget__submit',
@@ -315,9 +318,6 @@
 						onClick: () => set_state({ mode: 'search' }),
 					}),
 				]) : null,
-				!state.can_create ? render_login_prompt(state) : null,
-				state.mode && state.can_create ? render_form(state, set_state) : null,
-				render_offers(state),
 			];
 
 			root.replaceChildren(create_element('div', { className: 'rideshare-riding-widget__client-content' }, children));
