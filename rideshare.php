@@ -255,6 +255,19 @@ class RidesharePlugin
 			$cpt = register_post_type($post_type, $args);
 			// error_log(__CLASS__ . '->' . __LINE__ . '->' . "CPT: " . print_r($cpt, true));
 		}
+
+		static::register_blocks();
+	}
+
+	static function register_blocks(): void
+	{
+		$block_dir = __DIR__ . '/build/rideshare';
+
+		if (!file_exists($block_dir . '/block.json')) {
+			return;
+		}
+
+		register_block_type($block_dir, array('render_callback' => array(__CLASS__, 'render_callback')));
 	}
 
 
@@ -353,6 +366,8 @@ class RidesharePlugin
 	protected static function public_hooks()
 	{
 		add_action('init', array(__CLASS__, 'init'));
+		add_action('wp_ajax_rideshare_save_riding_request', array(Riding_Controller::class, 'ajax_save_request'));
+		add_action('wp_ajax_nopriv_rideshare_save_riding_request', array(Riding_Controller::class, 'ajax_save_request'));
 
 		if (static::rideshare_rest_user_filter_enabled()) {
 			add_filter('rest_user_query', array(__CLASS__, 'exclude_rideshare_users_from_rest_query'), 10, 2);
@@ -535,14 +550,26 @@ class RidesharePlugin
 	 */
 	static function render_callback($attributes, $param, $object)
 	{
-		$slug = ((explode('/', $object->name ?? '/'))[0]);
-		$file_name = __DIR__ . "/build/{$slug}/render.php";
+		$name_parts = explode('/', $object->name ?? '/');
+		$slug = end($name_parts);
 
-		if (file_exists($file_name)) {
-			ob_start();
-			include $file_name;
-			return ob_get_clean();
+		if ('rideshare' === $slug) {
+			return static::render_rideshare_widget((array) $attributes);
 		}
+
+		return '';
+	}
+
+	static function render_rideshare_widget(array $attributes = array()): string
+	{
+		$initial_data = Riding_Controller::get_client_data();
+		$riding_items = $initial_data['riding_items'];
+		$can_use = $initial_data['can_create'];
+		$field_id_prefix = wp_unique_id('rideshare-riding-widget-');
+
+		ob_start();
+		include __DIR__ . '/build/rideshare/render.php';
+		return ob_get_clean();
 	}
 
 
@@ -570,6 +597,7 @@ class RidesharePlugin
 		 */
 		if (is_file($settings_class_file)) {
 			require plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
+			self::load_dependencies();
 
 			self::public_hooks();
 

@@ -1,12 +1,259 @@
-/**
- * The following styles get applied both on the front of your site
- * and in the editor.
- *
- * Replace them with your own styles or remove the file completely.
- */
-
 .wp-block-create-block-rideshare {
-	background-color: #21759b;
+	.rideshare-riding-widget,
+	&.rideshare-riding-widget {
+		border: 1px solid #d0d7de;
+		border-radius: 6px;
+		color: #1d2327;
+		padding: 1rem;
+	}
+
+	h2 {
+		font-size: 1.35rem;
+		line-height: 1.25;
+		margin: 0 0 1rem;
+	}
+}
+
+.rideshare-riding-widget__form {
+	display: grid;
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.rideshare-riding-widget__mode {
+	border: 0;
+	display: grid;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+
+	legend {
+		font-weight: 600;
+		margin-bottom: 0.25rem;
+	}
+
+	label {
+		align-items: center;
+		display: flex;
+		gap: 0.5rem;
+	}
+}
+
+.rideshare-riding-widget__field {
+	display: grid;
+	gap: 0.35rem;
+
+	span {
+		font-weight: 600;
+	}
+
+	input,
+	select,
+	textarea {
+		border: 1px solid #8c8f94;
+		border-radius: 4px;
+		box-sizing: border-box;
+		font: inherit;
+		min-height: 2.5rem;
+		padding: 0.45rem 0.6rem;
+		width: 100%;
+	}
+
+	textarea {
+		min-height: 6rem;
+		resize: vertical;
+	}
+}
+
+.rideshare-riding-widget__submit {
+	background: #0a7f64;
+	border: 1px solid #086b54;
+	border-radius: 4px;
 	color: #fff;
-	padding: 2px;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 600;
+	min-height: 2.5rem;
+	padding: 0.55rem 1rem;
+	width: fit-content;
+}
+
+.rideshare-riding-widget__actions,
+.rideshare-riding-widget__form-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	margin: 0 0 1rem;
+}
+
+.rideshare-riding-widget__submit:hover,
+.rideshare-riding-widget__submit:focus {
+	background: #086b54;
+}
+
+.rideshare-riding-widget__secondary-button {
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	color: #1d2327;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 600;
+	min-height: 2.5rem;
+	padding: 0.55rem 1rem;
+	width: fit-content;
+}
+
+.rideshare-riding-widget__secondary-button:hover,
+.rideshare-riding-widget__secondary-button:focus {
+	border-color: #50575e;
+}
+
+.rideshare-riding-widget__submit:disabled,
+.rideshare-riding-widget__secondary-button:disabled {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.rideshare-riding-widget__notice {
+	border-left: 4px solid #2271b1;
+	margin: 0 0 1rem;
+	padding: 0.7rem 0.85rem;
+}
+
+.rideshare-riding-widget__notice--success {
+	border-left-color: #0a7f64;
+}
+
+.rideshare-riding-widget__notice--error {
+	border-left-color: #b32d2e;
+}
+
+.rideshare-riding-widget__preview {
+	border-left: 4px solid #0a7f64;
+	padding-left: 0.85rem;
+
+	p {
+		margin: 0 0 0.5rem;
+	}
+}
+
+.rideshare-riding-widget__offers h3 {
+	font-size: 1rem;
+	line-height: 1.3;
+	margin: 1rem 0 0.6rem;
+}
+
+.rideshare-riding-widget__offer-list {
+	display: grid;
+	gap: 0.4rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.rideshare-riding-widget__ride {
+	border: 1px solid #d0d7de;
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.rideshare-riding-widget__ride-summary {
+	align-items: center;
+	cursor: pointer;
+	display: grid;
+	gap: 0.65rem;
+	grid-template-columns: 1.8rem minmax(0, 1fr);
+	list-style: none;
+	min-height: 2.75rem;
+	padding: 0.55rem 0.75rem;
+}
+
+.rideshare-riding-widget__ride-summary::-webkit-details-marker {
+	display: none;
+}
+
+.rideshare-riding-widget__type-icon {
+	align-items: center;
+	border-radius: 999px;
+	color: #fff;
+	display: inline-flex;
+	font-size: 0.9rem;
+	font-weight: 700;
+	height: 1.6rem;
+	justify-content: center;
+	line-height: 1;
+	width: 1.6rem;
+}
+
+.rideshare-riding-widget__type-icon--offer {
+	background: #0a7f64;
+}
+
+.rideshare-riding-widget__type-icon--request {
+	background: #2271b1;
+}
+
+.rideshare-riding-widget__summary-text {
+	display: grid;
+	gap: 0.15rem;
+	min-width: 0;
+}
+
+.rideshare-riding-widget__route,
+.rideshare-riding-widget__period {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.rideshare-riding-widget__route {
+	font-weight: 700;
+}
+
+.rideshare-riding-widget__period {
+	color: #50575e;
+}
+
+.rideshare-riding-widget__ride-details {
+	border-top: 1px solid #d0d7de;
+	padding: 0.7rem 0.75rem;
+}
+
+.rideshare-riding-widget__ride-details dl {
+	display: grid;
+	gap: 0.45rem;
+	margin: 0;
+}
+
+.rideshare-riding-widget__ride-details div {
+	display: grid;
+	gap: 0.2rem;
+}
+
+.rideshare-riding-widget__ride-details dt {
+	color: #50575e;
+	font-weight: 600;
+}
+
+.rideshare-riding-widget__ride-details dd {
+	margin: 0;
+}
+
+.rideshare-riding-widget__empty {
+	color: #50575e;
+	margin: 0;
+}
+
+@media (min-width: 640px) {
+	.rideshare-riding-widget__form {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.rideshare-riding-widget__mode,
+	.rideshare-riding-widget__field--wide,
+	.rideshare-riding-widget__form-actions {
+		grid-column: 1 / -1;
+	}
 }

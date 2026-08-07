@@ -31,8 +31,12 @@ import './editor.scss';
  */
 export default function Edit() {
 	return (
-		<p { ...useBlockProps() }>
-			{ __( 'Rideshare – hello from the editor!', 'rideshare' ) }
-		</p>
+		<div { ...useBlockProps( { className: 'rideshare-riding-widget' } ) }>
+			<h2>{ __( 'Mitfahrgelegenheit', 'rideshare' ) }</h2>
+			<div className="rideshare-riding-widget__preview">
+				<p>{ __( 'Frontend-Widget für Rideshare-Nutzer, die Mitfahrgelegenheiten suchen oder anbieten möchten.', 'rideshare' ) }</p>
+				<p>{ __( 'Ziele werden aus Stop_Model geladen und Anfragen in Riding_Model gespeichert.', 'rideshare' ) }</p>
+			</div>
+		</div>
 	);
 }

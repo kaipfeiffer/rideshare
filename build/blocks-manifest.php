@@ -6,10 +6,10 @@ return array(
 		'apiVersion' => 3,
 		'name' => 'create-block/rideshare',
 		'version' => '0.1.0',
-		'title' => 'Rideshare',
+		'title' => 'Rideshare Widget',
 		'category' => 'widgets',
-		'icon' => 'smiley',
-		'description' => 'Example block scaffolded with Create Block tool.',
+		'icon' => 'car',
+		'description' => 'Widget for rideshare users to search or offer rides.',
 		'example' => array(
 			
 		),
@@ -20,6 +20,7 @@ return array(
 		'editorScript' => 'file:./index.js',
 		'editorStyle' => 'file:./index.css',
 		'style' => 'file:./style-index.css',
+		'render' => 'file:./render.php',
 		'viewScript' => 'file:./view.js'
 	)
 );
