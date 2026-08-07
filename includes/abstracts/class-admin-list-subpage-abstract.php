@@ -66,6 +66,16 @@ abstract class Admin_List_Subpage_Abstract extends AdminListSubpageAbstract
         return Settings::PLUGIN_VERSION;
     }
 
+    static function get_text_domain()
+    {
+        return Settings::PLUGIN_TEXT_DOMAIN ?: 'rideshare';
+    }
+
+    protected static function get_ajax_action()
+    {
+        return Admin::TARGET;
+    }
+
     static function get_template()
     {
         return wp_unslash(Settings::PLUGIN_DIR_PATH) . '/includes/admin/templates/default-subpage-template.php';
