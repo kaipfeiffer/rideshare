@@ -37,6 +37,7 @@ class Riding_Controller extends Controller_Abstract
             'ajax_url' => admin_url('admin-ajax.php'),
             'action' => 'rideshare_save_riding_request',
             'can_create' => static::current_user_can_create_request(),
+            'login_url' => wp_login_url(static::get_current_url()),
             'nonce' => wp_create_nonce('rideshare_riding_request_save'),
             'stops' => static::format_stops_for_client(Stop_Controller::get_active_items()),
             'riding_items' => static::get_riding_items(),
@@ -167,6 +168,17 @@ class Riding_Controller extends Controller_Abstract
             $can_create,
             $user_id
         );
+    }
+
+    protected static function get_current_url(): string
+    {
+        if (is_singular()) {
+            return get_permalink() ?: home_url('/');
+        }
+
+        $request_uri = wp_unslash($_SERVER['REQUEST_URI'] ?? '/');
+
+        return home_url($request_uri);
     }
 
     protected static function create_from_request_data(array $data, int $user_id): ?array
@@ -374,6 +386,7 @@ class Riding_Controller extends Controller_Abstract
             'to' => __('Nach', 'rideshare'),
             'seats' => __('Plätze', 'rideshare'),
             'login_required' => __('Bitte melde dich mit einem Rideshare-Nutzerkonto an.', 'rideshare'),
+            'login' => __('Anmelden', 'rideshare'),
             'no_stops' => __('Es sind noch keine Ziele verfügbar.', 'rideshare'),
             'saving' => __('Wird gespeichert...', 'rideshare'),
         );

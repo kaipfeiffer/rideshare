@@ -129,6 +129,19 @@
 	border-left-color: #b32d2e;
 }
 
+.rideshare-riding-widget__login-prompt {
+	display: grid;
+	gap: 0.65rem;
+
+	p {
+		margin: 0;
+	}
+
+	a {
+		text-decoration: none;
+	}
+}
+
 .rideshare-riding-widget__preview {
 	border-left: 4px solid #0a7f64;
 	padding-left: 0.85rem;

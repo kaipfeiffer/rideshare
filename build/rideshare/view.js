@@ -64,6 +64,17 @@
 		});
 	};
 
+	const render_login_prompt = (state) => create_element('div', {
+		className: 'rideshare-riding-widget__notice rideshare-riding-widget__notice--info rideshare-riding-widget__login-prompt',
+	}, [
+		create_element('p', { text: state.labels.login_required }),
+		create_element('a', {
+			className: 'rideshare-riding-widget__secondary-button',
+			href: state.login_url,
+			text: state.labels.login,
+		}),
+	]);
+
 	const render_offers = (state) => {
 		const labels = state.labels;
 		const children = [
@@ -290,23 +301,21 @@
 			const children = [
 				create_element('h2', { text: labels.title }),
 				render_notice(state.notice?.message, state.notice?.type),
-				create_element('div', { className: 'rideshare-riding-widget__actions' }, [
+				state.can_create ? create_element('div', { className: 'rideshare-riding-widget__actions' }, [
 					create_element('button', {
 						className: 'rideshare-riding-widget__submit',
 						type: 'button',
-						disabled: !state.can_create,
 						text: labels.create_offer,
 						onClick: () => set_state({ mode: 'offer' }),
 					}),
 					create_element('button', {
 						className: 'rideshare-riding-widget__secondary-button',
 						type: 'button',
-						disabled: !state.can_create,
 						text: labels.create_request,
 						onClick: () => set_state({ mode: 'search' }),
 					}),
-				]),
-				!state.can_create ? render_notice(labels.login_required, 'info') : null,
+				]) : null,
+				!state.can_create ? render_login_prompt(state) : null,
 				state.mode && state.can_create ? render_form(state, set_state) : null,
 				render_offers(state),
 			];

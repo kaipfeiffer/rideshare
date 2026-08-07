@@ -18,19 +18,24 @@ $labels = $initial_data['labels'];
     <div class="rideshare-riding-widget__server-content">
         <h2><?php echo esc_html($labels['title']); ?></h2>
 
-        <div class="rideshare-riding-widget__actions">
-            <button class="rideshare-riding-widget__submit" type="button" data-rideshare-open-request="offer" <?php disabled(!$can_use); ?>>
-                <?php echo esc_html($labels['create_offer']); ?>
-            </button>
-            <button class="rideshare-riding-widget__secondary-button" type="button" data-rideshare-open-request="search" <?php disabled(!$can_use); ?>>
-                <?php echo esc_html($labels['create_request']); ?>
-            </button>
-        </div>
+        <?php if ($can_use) : ?>
+            <div class="rideshare-riding-widget__actions">
+                <button class="rideshare-riding-widget__submit" type="button" data-rideshare-open-request="offer">
+                    <?php echo esc_html($labels['create_offer']); ?>
+                </button>
+                <button class="rideshare-riding-widget__secondary-button" type="button" data-rideshare-open-request="search">
+                    <?php echo esc_html($labels['create_request']); ?>
+                </button>
+            </div>
+        <?php endif; ?>
 
         <?php if (!$can_use) : ?>
-            <p class="rideshare-riding-widget__notice rideshare-riding-widget__notice--info">
-                <?php echo esc_html($labels['login_required']); ?>
-            </p>
+            <div class="rideshare-riding-widget__notice rideshare-riding-widget__notice--info rideshare-riding-widget__login-prompt">
+                <p><?php echo esc_html($labels['login_required']); ?></p>
+                <a class="rideshare-riding-widget__secondary-button" href="<?php echo esc_url($initial_data['login_url']); ?>">
+                    <?php echo esc_html($labels['login']); ?>
+                </a>
+            </div>
         <?php endif; ?>
 
         <section class="rideshare-riding-widget__offers" aria-labelledby="<?php echo esc_attr($field_id_prefix); ?>offers-title">
