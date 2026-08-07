@@ -23,7 +23,7 @@
 		return createElement(
 			'div',
 			useBlockProps({ className: 'rideshare-riding-widget' }),
-			createElement('h2', null, __('Mitfahrgelegenheit', 'rideshare')),
+			createElement('h2', null, __('Ride sharing', 'rideshare')),
 			createElement(
 				'div',
 				{ className: 'rideshare-riding-widget__preview' },
@@ -31,7 +31,7 @@
 					'p',
 					null,
 					__(
-						'Frontend-Widget für Rideshare-Nutzer, die Mitfahrgelegenheiten suchen oder anbieten möchten.',
+						'Frontend widget for rideshare users who want to search for or offer rides.',
 						'rideshare'
 					)
 				),
@@ -39,7 +39,7 @@
 					'p',
 					null,
 					__(
-						'Ziele werden aus Stop_Model geladen und Anfragen in Riding_Model gespeichert.',
+						'Destinations are loaded from Stop_Model and requests are stored in Riding_Model.',
 						'rideshare'
 					)
 				)

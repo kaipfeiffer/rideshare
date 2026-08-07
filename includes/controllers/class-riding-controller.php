@@ -73,7 +73,7 @@ class Riding_Controller extends Controller_Abstract
     static function ajax_save_request(): void
     {
         if (!check_ajax_referer('rideshare_riding_request_save', 'nonce', false)) {
-            wp_send_json_error(array('message' => __('Die Anfrage konnte nicht verifiziert werden.', 'rideshare')), 403);
+            wp_send_json_error(array('message' => __('The request could not be verified.', 'rideshare')), 403);
         }
 
         $result = static::save_request_from_submission();
@@ -102,7 +102,7 @@ class Riding_Controller extends Controller_Abstract
 
         $nonce = sanitize_text_field(wp_unslash($_POST['rideshare_riding_request_nonce'] ?? ''));
         if (!wp_verify_nonce($nonce, 'rideshare_riding_request_save')) {
-            return array('type' => 'error', 'message' => __('Die Anfrage konnte nicht verifiziert werden.', 'rideshare'));
+            return array('type' => 'error', 'message' => __('The request could not be verified.', 'rideshare'));
         }
 
         return static::save_request_from_submission();
@@ -111,7 +111,7 @@ class Riding_Controller extends Controller_Abstract
     protected static function save_request_from_submission(): array
     {
         if (!static::current_user_can_create_request()) {
-            return array('type' => 'error', 'message' => __('Bitte melde dich mit einem Rideshare-Nutzerkonto an.', 'rideshare'));
+            return array('type' => 'error', 'message' => __('Please sign in with a rideshare user account.', 'rideshare'));
         }
 
         $data = static::sanitize_request_submission();
@@ -123,10 +123,10 @@ class Riding_Controller extends Controller_Abstract
 
         $row = static::create_from_request_data($data, get_current_user_id());
         if (!$row) {
-            return array('type' => 'error', 'message' => __('Die Anfrage konnte nicht gespeichert werden.', 'rideshare'));
+            return array('type' => 'error', 'message' => __('The request could not be saved.', 'rideshare'));
         }
 
-        return array('type' => 'success', 'message' => __('Deine Anfrage wurde gespeichert.', 'rideshare'));
+        return array('type' => 'success', 'message' => __('Your request has been saved.', 'rideshare'));
     }
 
     static function get_request_form_values(array $result): array
@@ -221,27 +221,27 @@ class Riding_Controller extends Controller_Abstract
         $errors = array();
 
         if (!in_array($data['request_type'], array('search', 'offer'), true)) {
-            $errors[] = __('Bitte wähle aus, ob du eine Mitfahrgelegenheit suchen oder anbieten möchtest.', 'rideshare');
+            $errors[] = __('Please choose whether you want to search for or offer a ride.', 'rideshare');
         }
 
         if (!$data['origin_id'] || !Stop_Controller::item_exists($data['origin_id'])) {
-            $errors[] = __('Bitte wähle einen Startpunkt aus.', 'rideshare');
+            $errors[] = __('Please choose an origin.', 'rideshare');
         }
 
         if (!$data['destination_id'] || !Stop_Controller::item_exists($data['destination_id'])) {
-            $errors[] = __('Bitte wähle ein Ziel aus.', 'rideshare');
+            $errors[] = __('Please choose a destination.', 'rideshare');
         }
 
         if ($data['origin_id'] && $data['destination_id'] && $data['origin_id'] === $data['destination_id']) {
-            $errors[] = __('Startpunkt und Ziel müssen unterschiedlich sein.', 'rideshare');
+            $errors[] = __('Origin and destination must be different.', 'rideshare');
         }
 
         if (!$data['start_date']) {
-            $errors[] = __('Bitte wähle einen Startzeitpunkt aus.', 'rideshare');
+            $errors[] = __('Please choose a start time.', 'rideshare');
         }
 
         if ($data['end_date'] && $data['start_date'] && strtotime($data['end_date']) < strtotime($data['start_date'])) {
-            $errors[] = __('Das Ende muss nach dem Start liegen.', 'rideshare');
+            $errors[] = __('The end time must be after the start time.', 'rideshare');
         }
 
         return $errors;
@@ -291,7 +291,7 @@ class Riding_Controller extends Controller_Abstract
         return array(
             'id' => intval($item['id'] ?? 0),
             'type' => $type,
-            'type_label' => 'offer' === $type ? __('Angebot', 'rideshare') : __('Anfrage', 'rideshare'),
+            'type_label' => 'offer' === $type ? __('Offer', 'rideshare') : __('Request', 'rideshare'),
             'origin_id' => intval($item['origin_id'] ?? 0),
             'origin_label' => Stop_Controller::get_item_label(intval($item['origin_id'] ?? 0)),
             'destination_id' => intval($item['destination_id'] ?? 0),
@@ -303,7 +303,7 @@ class Riding_Controller extends Controller_Abstract
             'end_date' => $item['end_date'] ?? '',
             'end_label' => static::format_datetime_display_value($item['end_date'] ?? ''),
             'period_label' => static::format_period_label($item['start_date'] ?? '', $item['end_date'] ?? ''),
-            'passengers_label' => 'offer' === $type ? __('Freie Plätze', 'rideshare') : __('Anzahl Mitfahrer', 'rideshare'),
+            'passengers_label' => 'offer' === $type ? __('Available seats', 'rideshare') : __('Number of passengers', 'rideshare'),
         );
     }
 
@@ -363,32 +363,32 @@ class Riding_Controller extends Controller_Abstract
     protected static function get_client_labels(): array
     {
         return array(
-            'title' => __('Mitfahrgelegenheit', 'rideshare'),
-            'rides' => __('Fahrten', 'rideshare'),
-            'no_items' => __('Derzeit sind keine Fahrten verfügbar.', 'rideshare'),
-            'create_offer' => __('Fahrt anbieten', 'rideshare'),
-            'create_request' => __('Fahrt anfragen', 'rideshare'),
-            'mode_label' => __('Ich möchte', 'rideshare'),
-            'search_label' => __('eine Mitfahrgelegenheit suchen', 'rideshare'),
-            'offer_label' => __('eine Mitfahrgelegenheit anbieten', 'rideshare'),
-            'origin' => __('Startpunkt', 'rideshare'),
-            'origin_placeholder' => __('Startpunkt auswählen', 'rideshare'),
-            'destination' => __('Ziel', 'rideshare'),
-            'destination_placeholder' => __('Ziel auswählen', 'rideshare'),
-            'type' => __('Typ', 'rideshare'),
-            'start_date' => __('Startzeit', 'rideshare'),
-            'end_date' => __('Ende', 'rideshare'),
-            'passengers' => __('Personen', 'rideshare'),
-            'description' => __('Hinweis', 'rideshare'),
-            'save' => __('Speichern', 'rideshare'),
-            'cancel' => __('Abbrechen', 'rideshare'),
-            'from' => __('Von', 'rideshare'),
-            'to' => __('Nach', 'rideshare'),
-            'seats' => __('Plätze', 'rideshare'),
-            'login_required' => __('Bitte melde dich mit einem Rideshare-Nutzerkonto an.', 'rideshare'),
-            'login' => __('Anmelden', 'rideshare'),
-            'no_stops' => __('Es sind noch keine Ziele verfügbar.', 'rideshare'),
-            'saving' => __('Wird gespeichert...', 'rideshare'),
+            'title' => __('Ride sharing', 'rideshare'),
+            'rides' => __('Rides', 'rideshare'),
+            'no_items' => __('No rides are currently available.', 'rideshare'),
+            'create_offer' => __('Offer a ride', 'rideshare'),
+            'create_request' => __('Request a ride', 'rideshare'),
+            'mode_label' => __('I want to', 'rideshare'),
+            'search_label' => __('search for a ride', 'rideshare'),
+            'offer_label' => __('offer a ride', 'rideshare'),
+            'origin' => __('Origin', 'rideshare'),
+            'origin_placeholder' => __('Choose origin', 'rideshare'),
+            'destination' => __('Destination', 'rideshare'),
+            'destination_placeholder' => __('Choose destination', 'rideshare'),
+            'type' => __('Type', 'rideshare'),
+            'start_date' => __('Start time', 'rideshare'),
+            'end_date' => __('End time', 'rideshare'),
+            'passengers' => __('Passengers', 'rideshare'),
+            'description' => __('Note', 'rideshare'),
+            'save' => __('Save', 'rideshare'),
+            'cancel' => __('Cancel', 'rideshare'),
+            'from' => __('From', 'rideshare'),
+            'to' => __('To', 'rideshare'),
+            'seats' => __('Seats', 'rideshare'),
+            'login_required' => __('Please sign in with a rideshare user account.', 'rideshare'),
+            'login' => __('Sign in', 'rideshare'),
+            'no_stops' => __('No destinations are available yet.', 'rideshare'),
+            'saving' => __('Saving...', 'rideshare'),
         );
     }
 }

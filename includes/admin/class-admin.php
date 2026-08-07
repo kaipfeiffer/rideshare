@@ -339,7 +339,7 @@ class Admin implements AjaxInterface
 
         // error_log(__CLASS__ . '->' . __LINE__ . '->' . $page_slug . '->' . static::$admin_hook_suffix);
         // Bezeichnung des ersten Eintrages ändern (erster Eintrag verweist ebenfalls auf Hauptseite)
-        $sub_hook_suffix = add_submenu_page(static::$admin_hook_suffix, __('Settings', 'rideshare'), __('Einstellungen', 'rideshare'), 'manage_options', $page_slug);
+        $sub_hook_suffix = add_submenu_page(static::$admin_hook_suffix, __('Settings', 'rideshare'), __('Settings', 'rideshare'), 'manage_options', $page_slug);
 
         foreach (static::$sub_pages as $sub_page) {
             // error_log(__CLASS__ . '->' . __LINE__ . '->' . $sub_page);
