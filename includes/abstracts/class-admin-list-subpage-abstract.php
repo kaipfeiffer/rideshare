@@ -66,11 +66,6 @@ abstract class Admin_List_Subpage_Abstract extends AdminListSubpageAbstract
         return Settings::PLUGIN_VERSION;
     }
 
-    static function get_text_domain()
-    {
-        return Settings::PLUGIN_TEXT_DOMAIN ?: 'rideshare';
-    }
-
     protected static function get_ajax_action()
     {
         return Admin::TARGET;
