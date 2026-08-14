@@ -20,7 +20,7 @@ class Activator
 {
 	/**
 	 * $models
-	 * 
+	 *
 	 * list of all models to create tables for
 	 */
 	static $models	= array(
@@ -34,9 +34,9 @@ class Activator
 
 	/**
 	 * $plugin_info
-	 * 
+	 *
 	 * holds plugin information
-	 * 
+	 *
 	 * @var	array
 	 */
 	static $plugin_info = null;
@@ -44,11 +44,11 @@ class Activator
 
 	/**
 	 * get_roles
-	 * 
+	 *
 	 * define roles and capabilities
 	 *
 	 * @return	array
-	 * 
+	 *
 	 * @since    0.1.0
 	 * @access   protected
 	 */
@@ -74,11 +74,11 @@ class Activator
 
 	/**
 	 * set_plugin_info
-	 * 
+	 *
 	 * initiates plugin information
 	 *
 	 * @param	string	$plugin_file
-	 * 
+	 *
 	 * @since    0.1.1
 	 * @access   protected
 	 */
@@ -109,11 +109,6 @@ class Activator
 
 		$settings_class_file = plugin_dir_path(__FILE__) . 'class-settings.php';
 		if (!is_file($settings_class_file)) {
-			$settings_defaults_file = plugin_dir_path(__FILE__) . 'class-default-settings.php';
-			if (is_file($settings_defaults_file)) {
-				copy($settings_defaults_file, $settings_class_file);
-				require $settings_class_file;
-			}
 			static::create_settings_file($plugin_file);
 		}
 	}
@@ -121,7 +116,7 @@ class Activator
 
 	/**
 	 * db_delta
-	 * 
+	 *
 	 * create tables for all models
 	 *
 	 * @return	string
@@ -185,13 +180,52 @@ class Activator
 		$new_settings_content .= 'const PLUGIN_PREFIX	= \'' . static::$plugin_info['prefix'] . '\';' . "\n";
 		$new_settings_content .= 'const PLUGIN_TEXT_DOMAIN	= \'' . static::$plugin_info['TextDomain'] . '\';' . "\n";
 		$new_settings_content .= 'const PLUGIN_URL	= \'' . plugin_dir_url($plugin_file) . '\';' . "\n";
+		$new_settings_content .= 'const PLUGIN_VERSION	= \'' . static::$plugin_info['Version'] . '\';' . "\n";
 
-		if (!Settings::PLUGIN_PREFIX) {
-			$new_settings_content .= 'const PLUGIN_VERSION	= \'' . Settings::PLUGIN_VERSION . '\';' . "\n";
-		} else {
-			$new_settings_content .= 'const PLUGIN_VERSION	= \'' . static::$plugin_info['Version'] . '\';' . "\n";
-		}
 		return $new_settings_content;
+	}
+
+
+	/**
+	 * scan_post_types
+	 *
+	 * Collects custom post type definitions for the generated settings file.
+	 *
+	 * @return	array
+	 *
+	 * @since    0.1.1
+	 * @access   protected
+	 */
+	protected static function scan_post_types($plugin_file): array
+	{
+		$cpt_list = array();
+		$custom_post_types_path = plugin_dir_path($plugin_file) . 'includes' . DIRECTORY_SEPARATOR . 'custom-post-types';
+
+		if (!is_dir($custom_post_types_path)) {
+			return $cpt_list;
+		}
+
+		$custom_post_types = scandir($custom_post_types_path);
+		foreach ($custom_post_types as $file_name) {
+			if (in_array($file_name, array('.', '..', 'class-sample-cpt.php'))) {
+				continue;
+			}
+
+			$cpt_classname = __NAMESPACE__ . '\\' . str_replace('-', '_', ucwords(preg_replace('/\.php$/', '', preg_replace('/^class-/', '', $file_name)), '-'));
+			$method = array($cpt_classname, 'get_post_type');
+
+			if (!is_callable($method)) {
+				continue;
+			}
+
+			$cpt_name = call_user_func($method);
+			$definition_method = array($cpt_classname, 'get_custom_post_type_definition');
+			if (is_callable($definition_method)) {
+				$cpt_list[$cpt_name] = call_user_func($definition_method);
+			}
+		}
+
+		return $cpt_list;
 	}
 
 
@@ -206,25 +240,57 @@ class Activator
 	 * @return	void
 	 * 
 	 * @since    0.1.1
-	 * @access   protected
+	 * @access   public
 	 */
-	protected static function create_settings_file($plugin_file)
+	public static function create_settings_file($plugin_file)
 	{
 		static::init_plugin_info($plugin_file);
 
 		$settings_class_path = plugin_dir_path(__FILE__) . 'class-settings.php';
 
-		$settings_file_content = file_get_contents($settings_class_path);
+		if (is_file($settings_class_path)) {
+			$settings_file_content = file_get_contents($settings_class_path);
+		} else {
+			$default_settings_class_path = plugin_dir_path(__FILE__) . 'class-default-settings.php';
+			if (!is_file($default_settings_class_path)) {
+				throw new \Exception('Default settings file not found: ' . $default_settings_class_path);
+			}
+			$settings_file_content = file_get_contents($default_settings_class_path);
+		}
+
 		list($header, $content)	= explode('// Start Settings-Constants', $settings_file_content);
 		list($content, $footer)	= explode('// End Settings-Constants', $content);
 
 		$new_settings_content = static::create_plugin_constants($plugin_file);
+		$new_settings_content .= "\n" . '// Custom Post Types' . "\n";
+		$new_settings_content .= 'const POST_TYPES = ' . var_export(static::scan_post_types($plugin_file), true) . ';';
 
 		$new_registration_file_content = $header . '// Start Settings-Constants' . "\n" . $new_settings_content . "\n" . '// End Settings-Constants' . $footer;
 
 		$written = file_put_contents($settings_class_path, $new_registration_file_content);
 
 		header('refresh:0');
+	}
+
+
+	/**
+	 * sync_settings_file
+	 *
+	 * Creates or updates the generated settings file when required.
+	 *
+	 * @return	void
+	 *
+	 * @since    0.1.1
+	 * @access   public
+	 */
+	public static function sync_settings_file($plugin_file, bool $run_plugin_update = false): void
+	{
+		if ($run_plugin_update) {
+			static::update_plugin($plugin_file);
+			return;
+		}
+
+		static::create_settings_file($plugin_file);
 	}
 
 
@@ -249,18 +315,16 @@ class Activator
 		$version	= get_option(static::$plugin_info['prefix'] . '_version', '0.1.0');
 
 		error_log('update_plugin: ' . static::$plugin_info['prefix'] . '_version: ' . $version . ' -> ' . static::$plugin_info['Version']);
-		if ($version < static::$plugin_info['Version']) {
+		static::db_delta();
 
-			switch ($version) {
-				case '0.1.1':
-					// update from 0.1.0 to 0.1.1
-					// static::LOG_FLAGS & static::LOG_UPDATE_PLUGIN &&
-					// update process for version 0.1.1
-					static::db_delta();
-					break;
-			}
-			update_option(static::$plugin_info['prefix'] . '_version', static::$plugin_info['Version'], false);
+		switch ($version) {
+			case '0.1.1':
+				// update from 0.1.0 to 0.1.1
+				// static::LOG_FLAGS & static::LOG_UPDATE_PLUGIN &&
+				// update process for version 0.1.1
+				break;
 		}
+		update_option(static::$plugin_info['prefix'] . '_version', static::$plugin_info['Version'], false);
 
 		static::create_settings_file($plugin_file);
 	}

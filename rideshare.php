@@ -40,8 +40,6 @@ class RidesharePlugin
 	 */
 	static private $is_loaded = false;
 
-	static $info;
-
 	static $json_classes = array(
 		__NAMESPACE__ . '\\Routing_Handler',
 		__NAMESPACE__ . '\\Admin'
@@ -147,38 +145,6 @@ class RidesharePlugin
 
 
 	/**
-	 * create_plugin_constants
-	 * 
-	 *
-	 * @return	string
-	 * 
-	 * @since    0.1.0
-	 * @access   protected
-	 */
-	protected static function create_plugin_constants(): string
-	{
-		$info = static::get_plugin_info();
-
-		$new_settings_content = 'const PLUGIN_DIR_PATH	= \'' . plugin_dir_path(__FILE__) . '\';' . "\n";
-		$new_settings_content .= 'const PLUGIN_NAME	= \'' . $info['Name'] . '\';' . "\n";
-		$new_settings_content .= 'const PLUGIN_PREFIX	= \'' . static::PLUGIN_PREFIX . '\';' . "\n";
-		$new_settings_content .= 'const PLUGIN_TEXT_DOMAIN	= \'' . $info['TextDomain'] . '\';' . "\n";
-		$new_settings_content .= 'const PLUGIN_URL	= \'' . plugin_dir_url(__FILE__) . '\';' . "\n";
-		$new_settings_content .= 'const PLUGIN_VERSION	= \'' . $info['Version'] . '\';' . "\n";
-
-		return $new_settings_content;
-	}
-
-	protected static function get_plugin_info(): array
-	{
-		if (empty(static::$info)) {
-			static::$info = get_plugin_data(__FILE__);
-		}
-		return static::$info;
-	}
-
-
-	/**
 	 * get_post_types
 	 * 
 	 * For performance reasons all custom post type definitions
@@ -201,39 +167,35 @@ class RidesharePlugin
 	}
 
 
-	/**
-	 * scan_post_types
-	 * 
-	 * For performance reasons all custom post type definitions
-	 * were parsed on first call and stored in the settings class file.
-	 * Because theywere defined on every page request.
-	 *
-	 * @return	array
-	 * 
-	 * @since    0.1.0
-	 * @access   protected
-	 */
-	protected static function scan_post_types(): array
+	protected static function settings_file_needs_sync(string $settings_class_file): bool
 	{
-		$cpt_list =  array();
-		$custom_post_types 	= scandir(plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'custom-post-types');
-
-		foreach ($custom_post_types as $file_name) {
-			if (!in_array($file_name, array('.', '..','class-sample-cpt.php'))) {
-				$cpt_classname = __NAMESPACE__ . '\\' . str_replace('-', '_', ucwords(preg_replace('/\.php$/', '', preg_replace('/^class-/', '', $file_name)), '-'));
-				$method = array($cpt_classname, 'get_post_type');
-
-				if (is_callable($method)) {
-					$cpt_name = call_user_func($method);
-					$method = array($cpt_classname, 'get_custom_post_type_definition');
-					if (is_callable($method)) {
-						$cpt_definition = call_user_func($method);
-						$cpt_list[$cpt_name] = $cpt_definition;
-					}
-				}
-			}
+		if (!is_file($settings_class_file)) {
+			return true;
 		}
-		return $cpt_list;
+
+		require_once $settings_class_file;
+
+		return version_compare(Settings::PLUGIN_VERSION, static::get_plugin_version(), '<');
+	}
+
+
+	protected static function plugin_update_needs_sync(): bool
+	{
+		$version = get_option(static::PLUGIN_PREFIX . '_version', '0.1.0');
+
+		return version_compare($version, static::get_plugin_version(), '<');
+	}
+
+
+	protected static function get_plugin_version(): string
+	{
+		if (!function_exists('get_plugin_data')) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$plugin_data = get_plugin_data(__FILE__);
+
+		return $plugin_data['Version'];
 	}
 
 
@@ -328,48 +290,6 @@ class RidesharePlugin
 
 			self::$is_loaded	= true;
 		}
-	}
-
-
-	/**
-	 * init_settings
-	 * 
-	 * @static
-	 * @since	0.1.0
-	 */
-	protected static function init_settings()
-	{
-		self::load_dependencies();
-
-		$info = static::get_plugin_info();
-		$settings_class_path = plugin_dir_path(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
-
-		if (is_file($settings_class_path)) {
-			$settings_file_content = file_get_contents($settings_class_path);
-		} else {
-			$default_settings_class_path = plugin_dir_path(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'class-default-settings.php';
-			if (!is_file($default_settings_class_path)) {
-				throw new \Exception('Default settings file not found: ' . $default_settings_class_path);
-			}
-			$settings_file_content = file_get_contents($default_settings_class_path);
-		}
-		list($settings_file_header, $content)	= explode('// Start Settings-Constants', $settings_file_content);
-		list($content, $settings_file_footer)	= explode('// End Settings-Constants', $content);
-
-		$new_settings_content = static::create_plugin_constants();
-
-		$new_settings_content .= "\n" . '// Custom Post Types' . "\n";
-		$cpt_list = static::scan_post_types();
-
-		$new_settings_content .= 'const POST_TYPES = ' . var_export($cpt_list, true) . ';';
-
-		$settings_file_header	= preg_replace('/Version:[^\n]*/', 'Version:           ' . $info['Version'], $settings_file_header);
-		$new_settings_file_content = sprintf(
-			"%1\$s // Start Settings-Constants\n%2\$s\n// End Settings-Constants %3\$s", 
-			$settings_file_header, 
-			$new_settings_content, 
-			$settings_file_footer);
-		file_put_contents($settings_class_path, $new_settings_file_content);
 	}
 
 
@@ -667,8 +587,12 @@ class RidesharePlugin
 		$settings_class_file = plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
 
 		if (is_admin()) {
-			if (!is_file($settings_class_file) || get_plugin_data($settings_class_file)['Version'] < get_plugin_data(__FILE__)['Version']) {
-				self::init_settings();
+			$settings_file_needs_sync = self::settings_file_needs_sync($settings_class_file);
+			$plugin_update_needs_sync = self::plugin_update_needs_sync();
+
+			if ($settings_file_needs_sync || $plugin_update_needs_sync) {
+				self::load_dependencies();
+				Activator::sync_settings_file(__FILE__, $plugin_update_needs_sync);
 			}
 		}
 
@@ -676,7 +600,7 @@ class RidesharePlugin
 		 * The Settings-Class
 		 */
 		if (is_file($settings_class_file)) {
-			require plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
+			require_once plugin_dir_path(__FILE__) . 'includes' . DIRECTORY_SEPARATOR . 'class-settings.php';
 			self::load_dependencies();
 
 			self::public_hooks();
