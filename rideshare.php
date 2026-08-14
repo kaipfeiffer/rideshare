@@ -31,10 +31,6 @@ class RidesharePlugin
 
 	const REST_USER_FILTER_OPTION = 'hide_rideshare_users_in_rest';
 
-	const BOOKINGS_DB_VERSION_OPTION = 'bookings_db_version';
-
-	const BOOKINGS_DB_VERSION = '1';
-
 	/**
 	 * $is_loaded
 	 * 
@@ -253,7 +249,6 @@ class RidesharePlugin
 	static function init()
 	{
 		static::load_textdomains();
-		static::ensure_booking_table();
 
 		$post_types = self::get_post_types();
 
@@ -278,18 +273,6 @@ class RidesharePlugin
 			false,
 			dirname(plugin_basename(__FILE__)) . '/vendor/kaipfeiffer/wpbase/languages'
 		);
-	}
-
-	protected static function ensure_booking_table(): void
-	{
-		$option_name = static::PLUGIN_PREFIX . static::BOOKINGS_DB_VERSION_OPTION;
-
-		if (static::BOOKINGS_DB_VERSION === get_option($option_name)) {
-			return;
-		}
-
-		Booking_Model::db_delta();
-		update_option($option_name, static::BOOKINGS_DB_VERSION);
 	}
 
 	static function register_blocks(): void
@@ -399,15 +382,77 @@ class RidesharePlugin
 	protected static function public_hooks()
 	{
 		add_action('init', array(__CLASS__, 'init'));
-		add_action('wp_ajax_rideshare_save_riding_request', array(Riding_Controller::class, 'ajax_save_request'));
-		add_action('wp_ajax_nopriv_rideshare_save_riding_request', array(Riding_Controller::class, 'ajax_save_request'));
-		add_action('wp_ajax_rideshare_book_riding', array(Booking_Controller::class, 'ajax_create_booking'));
-		add_action('wp_ajax_nopriv_rideshare_book_riding', array(Booking_Controller::class, 'ajax_create_booking'));
+		add_action('phpmailer_init', array(__CLASS__, 'configure_sendmail_transport'));
+		add_filter('wp_mail_from', array(__CLASS__, 'filter_sendmail_from_address'));
+		add_filter('wp_mail_from_name', array(__CLASS__, 'filter_sendmail_from_name'));
+		add_action('wp_ajax_rideshare_save_riding_request', array(static::class, 'Riding_Controller__ajax_save_request'));
+		add_action('wp_ajax_nopriv_rideshare_save_riding_request', array(static::class, 'Riding_Controller__ajax_save_request'));
+		add_action('wp_ajax_rideshare_book_riding', array(static::class, 'Booking_Controller__ajax_create_booking'));
+		add_action('wp_ajax_nopriv_rideshare_book_riding', array(static::class, 'Booking_Controller__ajax_create_booking'));
 
 		if (static::rideshare_rest_user_filter_enabled()) {
 			add_filter('rest_user_query', array(__CLASS__, 'exclude_rideshare_users_from_rest_query'), 10, 2);
 			add_filter('rest_request_before_callbacks', array(__CLASS__, 'block_rideshare_user_rest_item'), 10, 3);
 		}
+	}
+
+	static function configure_sendmail_transport($phpmailer): void
+	{
+		if (!static::sendmail_transport_enabled()) {
+			return;
+		}
+
+		if (!is_object($phpmailer) || !method_exists($phpmailer, 'isSendmail')) {
+			return;
+		}
+
+		$phpmailer->isSendmail();
+		$phpmailer->Sendmail = apply_filters(
+			'rideshare_sendmail_path',
+			ini_get('sendmail_path') ?: '/usr/sbin/sendmail -t -i',
+			$phpmailer
+		);
+	}
+
+	static function sendmail_transport_enabled(): bool
+	{
+		$enabled = defined('RIDESHARE_USE_SENDMAIL') && RIDESHARE_USE_SENDMAIL;
+
+		if (!$enabled) {
+			$env_value = getenv('RIDESHARE_USE_SENDMAIL');
+			$enabled = is_string($env_value) && in_array(strtolower($env_value), array('1', 'true', 'yes', 'on'), true);
+		}
+
+		return (bool) apply_filters(
+			'rideshare_sendmail_enabled',
+			$enabled
+		);
+	}
+
+	static function filter_sendmail_from_address($from_email): string
+	{
+		if (!static::sendmail_transport_enabled()) {
+			return $from_email;
+		}
+
+		return apply_filters(
+			'rideshare_sendmail_from_address',
+			'wordpress@poolworx.local',
+			$from_email
+		);
+	}
+
+	static function filter_sendmail_from_name($from_name): string
+	{
+		if (!static::sendmail_transport_enabled()) {
+			return $from_name;
+		}
+
+		return apply_filters(
+			'rideshare_sendmail_from_name',
+			'Poolworx',
+			$from_name
+		);
 	}
 
 	static function get_rest_user_filter_option_name(): string
