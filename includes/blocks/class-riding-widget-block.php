@@ -72,6 +72,7 @@ class Riding_Widget_Block
     {
         $initial_data = Riding_Controller::get_client_data();
         $riding_items = $initial_data['riding_items'];
+        $user_riding_items = $initial_data['user_riding_items'];
         $can_use = $initial_data['can_create'];
         $field_id_prefix = wp_unique_id('rideshare-riding-widget-');
 

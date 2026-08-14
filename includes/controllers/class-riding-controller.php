@@ -43,11 +43,33 @@ class Riding_Controller extends Controller_Abstract
             'booking_nonce' => wp_create_nonce(Booking_Controller::NONCE),
             'stops' => static::format_stops_for_client(Stop_Controller::get_active_items()),
             'riding_items' => static::get_riding_items(),
+            'user_riding_items' => static::get_user_riding_items(),
             'labels' => static::get_client_labels(),
         );
     }
 
     static function get_riding_items(): array
+    {
+        $items = array_filter(static::get_all_riding_items(get_current_user_id()), array(static::class, 'should_show_riding_item'));
+
+        return array_values(array_filter($items, function ($item) {
+            return empty($item['is_past']);
+        }));
+    }
+
+    static function get_user_riding_items(?int $user_id = null): array
+    {
+        $user_id = $user_id ?: get_current_user_id();
+        if (!$user_id) {
+            return array();
+        }
+
+        return array_values(array_filter(static::get_all_riding_items($user_id), function ($item) use ($user_id) {
+            return static::user_is_related_to_riding($item, $user_id);
+        }));
+    }
+
+    protected static function get_all_riding_items(?int $user_id = null): array
     {
         $items = Riding_Model::read(null);
         if (!is_array($items)) {
@@ -62,9 +84,11 @@ class Riding_Controller extends Controller_Abstract
             return strcmp($left['start_date'] ?? '', $right['start_date'] ?? '');
         });
 
-        $items = array_map(array(static::class, 'format_riding_for_client'), $items);
+        $items = array_map(function ($item) use ($user_id) {
+            return static::format_riding_for_client($item, $user_id);
+        }, $items);
 
-        return array_values(array_filter($items, array(static::class, 'should_show_riding_item')));
+        return array_values($items);
     }
 
     static function get_offered_items(): array
@@ -84,6 +108,7 @@ class Riding_Controller extends Controller_Abstract
         $payload = array(
             'message' => $result['message'] ?? '',
             'riding_items' => static::get_riding_items(),
+            'user_riding_items' => static::get_user_riding_items(),
         );
 
         if ('success' === ($result['type'] ?? '')) {
@@ -288,7 +313,7 @@ class Riding_Controller extends Controller_Abstract
         }, $stops));
     }
 
-    protected static function format_riding_for_client(array $item): array
+    protected static function format_riding_for_client(array $item, ?int $current_user_id = null): array
     {
         $type = !empty($item['driver_id']) ? 'offer' : 'request';
         $riding_id = intval($item['id'] ?? 0);
@@ -297,10 +322,12 @@ class Riding_Controller extends Controller_Abstract
         $is_booked = 'request' === $type && Booking_Controller::riding_has_active_booking($riding_id);
         $available_seats = 'offer' === $type ? max(0, $capacity - $booked_seats) : ($is_booked ? 0 : $capacity);
         $displayed_passengers = 'offer' === $type ? $available_seats : $capacity;
-        $current_user_id = get_current_user_id();
+        $current_user_id = null === $current_user_id ? get_current_user_id() : $current_user_id;
         $has_booking = Booking_Controller::user_has_active_booking($riding_id, $current_user_id);
         $is_own_riding = static::current_user_owns_riding($item, $type, $current_user_id);
+        $is_past = static::is_past_riding($item);
         $can_book = static::current_user_can_book_riding($item, $type, $available_seats, $has_booking, $is_booked, $is_own_riding, $current_user_id);
+        $can_book = $is_past ? false : $can_book;
 
         return array(
             'id' => $riding_id,
@@ -321,6 +348,7 @@ class Riding_Controller extends Controller_Abstract
             'end_date' => $item['end_date'] ?? '',
             'end_label' => static::format_datetime_display_value($item['end_date'] ?? ''),
             'period_label' => static::format_period_label($item['start_date'] ?? '', $item['end_date'] ?? ''),
+            'is_past' => $is_past,
             'passengers_label' => 'offer' === $type ? __('Available seats', 'rideshare') : __('Number of passengers', 'rideshare'),
             'has_booking' => $has_booking,
             'is_own_riding' => $is_own_riding,
@@ -342,6 +370,15 @@ class Riding_Controller extends Controller_Abstract
         }
 
         return true;
+    }
+
+    protected static function user_is_related_to_riding(array $item, int $user_id): bool
+    {
+        if (!$user_id) {
+            return false;
+        }
+
+        return !empty($item['is_own_riding']) || !empty($item['has_booking']);
     }
 
     protected static function current_user_owns_riding(array $item, string $type, int $current_user_id): bool
@@ -439,6 +476,18 @@ class Riding_Controller extends Controller_Abstract
         return $timestamp ? intval($timestamp) : 0;
     }
 
+    protected static function is_past_riding(array $item): bool
+    {
+        $date = $item['end_date'] ?: ($item['start_date'] ?? '');
+        $timestamp = static::get_datetime_timestamp($date);
+
+        if (!$timestamp) {
+            return false;
+        }
+
+        return $timestamp < current_time('timestamp');
+    }
+
     protected static function format_compact_datetime(int $timestamp): string
     {
         $current_year = date_i18n('Y');
@@ -453,7 +502,9 @@ class Riding_Controller extends Controller_Abstract
         return array(
             'title' => __('Ride sharing', 'rideshare'),
             'rides' => __('Rides', 'rideshare'),
+            'my_rides' => __('My rides', 'rideshare'),
             'no_items' => __('No rides are currently available.', 'rideshare'),
+            'no_user_items' => __('You have no rides yet.', 'rideshare'),
             'create_offer' => __('Offer a ride', 'rideshare'),
             'create_request' => __('Request a ride', 'rideshare'),
             'mode_label' => __('I want to', 'rideshare'),
@@ -481,6 +532,8 @@ class Riding_Controller extends Controller_Abstract
             'booking' => __('Booking...', 'rideshare'),
             'booked' => __('Booked', 'rideshare'),
             'fully_booked' => __('Fully booked', 'rideshare'),
+            'status' => __('Status', 'rideshare'),
+            'past' => __('Past', 'rideshare'),
         );
     }
 }

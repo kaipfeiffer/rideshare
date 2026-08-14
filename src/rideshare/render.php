@@ -4,6 +4,7 @@
  *
  * @var array $initial_data
  * @var array $riding_items
+ * @var array $user_riding_items
  * @var bool $can_use
  * @var string $field_id_prefix
  */
@@ -86,6 +87,62 @@ $labels = $initial_data['labels'];
                 </ol>
             <?php endif; ?>
         </section>
+
+        <?php if ($can_use) : ?>
+            <section class="rideshare-riding-widget__offers" aria-labelledby="<?php echo esc_attr($field_id_prefix); ?>user-rides-title">
+                <h3 id="<?php echo esc_attr($field_id_prefix); ?>user-rides-title"><?php echo esc_html($labels['my_rides']); ?></h3>
+
+                <?php if (!$user_riding_items) : ?>
+                    <p class="rideshare-riding-widget__empty"><?php echo esc_html($labels['no_user_items']); ?></p>
+                <?php else : ?>
+                    <ol class="rideshare-riding-widget__offer-list">
+                        <?php foreach ($user_riding_items as $item) : ?>
+                            <li>
+                                <details class="rideshare-riding-widget__ride">
+                                    <summary class="rideshare-riding-widget__ride-summary">
+                                        <span class="rideshare-riding-widget__type-icon rideshare-riding-widget__type-icon--<?php echo esc_attr($item['type']); ?>" role="img" aria-label="<?php echo esc_attr($item['type_label']); ?>" title="<?php echo esc_attr($item['type_label']); ?>">
+                                            <?php echo 'offer' === $item['type'] ? '+' : '?'; ?>
+                                        </span>
+                                        <span class="rideshare-riding-widget__summary-text">
+                                            <span class="rideshare-riding-widget__route">
+                                                <?php echo esc_html($item['origin_label']); ?> &rarr; <?php echo esc_html($item['destination_label']); ?>
+                                            </span>
+                                            <span class="rideshare-riding-widget__period"><?php echo esc_html($item['period_label']); ?></span>
+                                        </span>
+                                    </summary>
+                                    <div class="rideshare-riding-widget__ride-details">
+                                        <dl>
+                                            <div>
+                                                <dt><?php echo esc_html__('Type', 'rideshare'); ?></dt>
+                                                <dd><?php echo esc_html($item['type_label']); ?></dd>
+                                            </div>
+                                            <?php if (!empty($item['is_past'])) : ?>
+                                                <div>
+                                                    <dt><?php echo esc_html($labels['status']); ?></dt>
+                                                    <dd><?php echo esc_html($labels['past']); ?></dd>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['passengers'])) : ?>
+                                                <div>
+                                                    <dt><?php echo esc_html($item['passengers_label']); ?></dt>
+                                                    <dd><?php echo esc_html($item['passengers']); ?></dd>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['description'])) : ?>
+                                                <div>
+                                                    <dt><?php echo esc_html__('Note', 'rideshare'); ?></dt>
+                                                    <dd><?php echo esc_html($item['description']); ?></dd>
+                                                </div>
+                                            <?php endif; ?>
+                                        </dl>
+                                    </div>
+                                </details>
+                            </li>
+                        <?php endforeach; ?>
+                    </ol>
+                <?php endif; ?>
+            </section>
+        <?php endif; ?>
 
         <?php if ($can_use) : ?>
             <div class="rideshare-riding-widget__actions">

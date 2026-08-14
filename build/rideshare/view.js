@@ -101,6 +101,7 @@
 				set_state({
 					booking_busy: null,
 					riding_items: data.riding_items || state.riding_items,
+					user_riding_items: data.user_riding_items || state.user_riding_items,
 					notice: { type: 'error', message: data.message || '' },
 				});
 				return;
@@ -109,6 +110,7 @@
 			set_state({
 				booking_busy: null,
 				riding_items: data.riding_items || state.riding_items,
+				user_riding_items: data.user_riding_items || state.user_riding_items,
 				notice: { type: 'success', message: data.message || '' },
 			});
 		} catch (error) {
@@ -138,69 +140,120 @@
 		]);
 	};
 
-	const render_offers = (state, set_state) => {
-		const labels = state.labels;
+	const render_riding_items = (items, state, set_state, show_booking_action = true) => create_element(
+		'ol',
+		{ className: 'rideshare-riding-widget__offer-list' },
+		items.map((item) => create_element(
+			'li',
+			{},
+			[
+				create_element('details', { className: 'rideshare-riding-widget__ride' }, [
+					create_element('summary', { className: 'rideshare-riding-widget__ride-summary' }, [
+						create_element('span', {
+							className: `rideshare-riding-widget__type-icon rideshare-riding-widget__type-icon--${item.type}`,
+							role: 'img',
+							'aria-label': item.type_label,
+							title: item.type_label,
+							text: item.type === 'offer' ? '+' : '?',
+						}),
+						create_element('span', { className: 'rideshare-riding-widget__summary-text' }, [
+							create_element('span', {
+								className: 'rideshare-riding-widget__route',
+								text: `${item.origin_label || ''} -> ${item.destination_label || ''}`,
+							}),
+							create_element('span', {
+								className: 'rideshare-riding-widget__period',
+								text: item.period_label || '',
+							}),
+						]),
+					]),
+					create_element('div', { className: 'rideshare-riding-widget__ride-details' }, [
+						create_element('dl', {}, [
+							create_element('div', {}, [
+								create_element('dt', { text: state.labels.type }),
+								create_element('dd', { text: item.type_label || '' }),
+							]),
+							item.is_past ? create_element('div', {}, [
+								create_element('dt', { text: state.labels.status }),
+								create_element('dd', { text: state.labels.past }),
+							]) : null,
+							item.passengers ? create_element('div', {}, [
+								create_element('dt', { text: item.passengers_label || state.labels.passengers }),
+								create_element('dd', { text: String(item.passengers) }),
+							]) : null,
+							item.description ? create_element('div', {}, [
+								create_element('dt', { text: state.labels.description }),
+								create_element('dd', { text: item.description }),
+							]) : null,
+						]),
+						show_booking_action ? render_booking_action(item, state, set_state) : null,
+					]),
+				]),
+			]
+		))
+	);
+
+	const render_riding_section = (title, empty_label, items, state, set_state, show_booking_action = true) => {
 		const children = [
-			create_element('h3', { text: labels.rides }),
+			create_element('h3', { text: title }),
 		];
 
-		if (!state.riding_items.length) {
+		if (!items.length) {
 			children.push(create_element('p', {
 				className: 'rideshare-riding-widget__empty',
-				text: labels.no_items,
+				text: empty_label,
 			}));
 		} else {
-			children.push(create_element(
-				'ol',
-				{ className: 'rideshare-riding-widget__offer-list' },
-				state.riding_items.map((item) => create_element(
-					'li',
-					{},
-					[
-						create_element('details', { className: 'rideshare-riding-widget__ride' }, [
-							create_element('summary', { className: 'rideshare-riding-widget__ride-summary' }, [
-								create_element('span', {
-									className: `rideshare-riding-widget__type-icon rideshare-riding-widget__type-icon--${item.type}`,
-									role: 'img',
-									'aria-label': item.type_label,
-									title: item.type_label,
-									text: item.type === 'offer' ? '+' : '?',
-								}),
-								create_element('span', { className: 'rideshare-riding-widget__summary-text' }, [
-									create_element('span', {
-										className: 'rideshare-riding-widget__route',
-										text: `${item.origin_label || ''} -> ${item.destination_label || ''}`,
-									}),
-									create_element('span', {
-										className: 'rideshare-riding-widget__period',
-										text: item.period_label || '',
-									}),
-								]),
-							]),
-							create_element('div', { className: 'rideshare-riding-widget__ride-details' }, [
-								create_element('dl', {}, [
-									create_element('div', {}, [
-										create_element('dt', { text: labels.type }),
-										create_element('dd', { text: item.type_label || '' }),
-									]),
-									item.passengers ? create_element('div', {}, [
-										create_element('dt', { text: item.passengers_label || labels.passengers }),
-										create_element('dd', { text: String(item.passengers) }),
-									]) : null,
-									item.description ? create_element('div', {}, [
-										create_element('dt', { text: labels.description }),
-										create_element('dd', { text: item.description }),
-									]) : null,
-								]),
-								render_booking_action(item, state, set_state),
-							]),
-						]),
-					]
-				))
-			));
+			children.push(render_riding_items(items, state, set_state, show_booking_action));
 		}
 
 		return create_element('section', { className: 'rideshare-riding-widget__offers' }, children);
+	};
+
+	const render_tabs = (state, set_state) => {
+		if (!state.can_create) {
+			return render_riding_section(
+				state.labels.rides,
+				state.labels.no_items,
+				state.riding_items,
+				state,
+				set_state
+			);
+		}
+
+		const active_tab = state.active_tab || 'rides';
+		const current_items = active_tab === 'my_rides' ? state.user_riding_items : state.riding_items;
+		const current_title = active_tab === 'my_rides' ? state.labels.my_rides : state.labels.rides;
+		const current_empty = active_tab === 'my_rides' ? state.labels.no_user_items : state.labels.no_items;
+
+		return create_element('div', { className: 'rideshare-riding-widget__tabs' }, [
+			create_element('div', { className: 'rideshare-riding-widget__tab-buttons', role: 'tablist' }, [
+				create_element('button', {
+					className: active_tab === 'rides' ? 'rideshare-riding-widget__tab-button rideshare-riding-widget__tab-button--active' : 'rideshare-riding-widget__tab-button',
+					type: 'button',
+					role: 'tab',
+					'aria-selected': active_tab === 'rides' ? 'true' : 'false',
+					text: state.labels.rides,
+					onClick: () => set_state({ active_tab: 'rides' }),
+				}),
+				create_element('button', {
+					className: active_tab === 'my_rides' ? 'rideshare-riding-widget__tab-button rideshare-riding-widget__tab-button--active' : 'rideshare-riding-widget__tab-button',
+					type: 'button',
+					role: 'tab',
+					'aria-selected': active_tab === 'my_rides' ? 'true' : 'false',
+					text: state.labels.my_rides,
+					onClick: () => set_state({ active_tab: 'my_rides' }),
+				}),
+			]),
+			render_riding_section(
+				current_title,
+				current_empty,
+				current_items,
+				state,
+				set_state,
+				active_tab === 'rides'
+			),
+		]);
 	};
 
 	const render_field = (label, input) => create_element(
@@ -248,6 +301,8 @@
 					busy: false,
 					mode: null,
 					riding_items: data.riding_items || state.riding_items,
+					user_riding_items: data.user_riding_items || state.user_riding_items,
+					active_tab: data.user_riding_items ? 'my_rides' : state.active_tab,
 					notice: { type: 'success', message: data.message || '' },
 				});
 			} catch (error) {
@@ -354,6 +409,8 @@
 			booking_busy: null,
 			mode: null,
 			notice: null,
+			active_tab: 'rides',
+			user_riding_items: state.user_riding_items || [],
 		};
 
 		const set_state = (changes) => {
@@ -368,7 +425,7 @@
 				render_notice(state.notice?.message, state.notice?.type),
 				!state.can_create ? render_login_prompt(state) : null,
 				state.mode && state.can_create ? render_form(state, set_state) : null,
-				render_offers(state, set_state),
+				render_tabs(state, set_state),
 				state.can_create ? create_element('div', { className: 'rideshare-riding-widget__actions' }, [
 					create_element('button', {
 						className: 'rideshare-riding-widget__submit',

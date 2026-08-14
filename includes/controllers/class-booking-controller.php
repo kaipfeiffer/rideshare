@@ -25,6 +25,7 @@ class Booking_Controller extends Controller_Abstract
             wp_send_json_error(array(
                 'message' => __('The booking could not be verified.', 'rideshare'),
                 'riding_items' => Riding_Controller::get_riding_items(),
+                'user_riding_items' => Riding_Controller::get_user_riding_items(),
             ), 403);
         }
 
@@ -32,6 +33,7 @@ class Booking_Controller extends Controller_Abstract
         $payload = array(
             'message' => $result['message'] ?? '',
             'riding_items' => Riding_Controller::get_riding_items(),
+            'user_riding_items' => Riding_Controller::get_user_riding_items(),
         );
 
         if ('success' === ($result['type'] ?? '')) {
