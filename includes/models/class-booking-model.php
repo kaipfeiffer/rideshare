@@ -18,6 +18,7 @@ class Booking_Model extends Model_Abstract
         'id'            => '%d',
         'riding_id'     => '%d',
         'passenger_id'  => '%d',
+        'driver_id'     => '%d',
         'seats'         => '%d',
         'status'        => '%d',
         'created'       => '%s',
@@ -46,6 +47,7 @@ class Booking_Model extends Model_Abstract
         return array(
             'riding_id' => __('Ride', 'rideshare'),
             'passenger_id' => __('Passenger', 'rideshare'),
+            'driver_id' => __('Driver', 'rideshare'),
             'seats' => __('Seats', 'rideshare'),
             'status' => __('Status', 'rideshare'),
         );
@@ -56,6 +58,7 @@ class Booking_Model extends Model_Abstract
         return array(
             'riding_id' => 'number',
             'passenger_id' => 'number',
+            'driver_id' => 'number',
             'seats' => 'number',
             'status' => 'number',
         );
@@ -77,24 +80,43 @@ class Booking_Model extends Model_Abstract
         return intval($wpdb->get_var($sql));
     }
 
-    static function get_active_booking_for_user(int $riding_id, int $passenger_id): ?array
+    static function get_active_booking_for_user(int $riding_id, int $user_id): ?array
     {
-        $rows = static::read(array(
-            'riding_id' => $riding_id,
-            'passenger_id' => $passenger_id,
-        ));
+        global $wpdb;
 
-        if (!is_array($rows)) {
-            return null;
-        }
+        $sql = $wpdb->prepare(
+            "SELECT *
+            FROM `" . static::get_table_name() . "`
+            WHERE riding_id = %d
+                AND status = 0
+                AND (deleted IS NULL OR deleted = '')
+                AND (passenger_id = %d OR driver_id = %d)
+            LIMIT 1",
+            $riding_id,
+            $user_id,
+            $user_id
+        );
 
-        foreach ($rows as $row) {
-            if (0 === intval($row['status'] ?? 0) && empty($row['deleted'])) {
-                return $row;
-            }
-        }
+        $row = $wpdb->get_row($sql, ARRAY_A);
 
-        return null;
+        return is_array($row) ? $row : null;
+    }
+
+    static function has_active_booking(int $riding_id): bool
+    {
+        global $wpdb;
+
+        $sql = $wpdb->prepare(
+            "SELECT id
+            FROM `" . static::get_table_name() . "`
+            WHERE riding_id = %d
+                AND status = 0
+                AND (deleted IS NULL OR deleted = '')
+            LIMIT 1",
+            $riding_id
+        );
+
+        return (bool) $wpdb->get_var($sql);
     }
 
     static function db_delta()
@@ -108,6 +130,7 @@ class Booking_Model extends Model_Abstract
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             riding_id bigint(20) UNSIGNED DEFAULT NULL,
             passenger_id bigint(20) UNSIGNED DEFAULT NULL,
+            driver_id bigint(20) UNSIGNED DEFAULT NULL,
             seats tinyint(4) UNSIGNED DEFAULT 1,
             status bigint(20) UNSIGNED DEFAULT 0,
             created datetime DEFAULT NULL,
@@ -116,6 +139,7 @@ class Booking_Model extends Model_Abstract
             PRIMARY KEY id (id),
             KEY riding_id (riding_id),
             KEY passenger_id (passenger_id),
+            KEY driver_id (driver_id),
             KEY status (status)
         ) $charset_collate;";
 

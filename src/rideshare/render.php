@@ -67,7 +67,7 @@ $labels = $initial_data['labels'];
                                             </div>
                                         <?php endif; ?>
                                     </dl>
-                                    <?php if ($can_use && 'offer' === $item['type']) : ?>
+                                    <?php if ($can_use && in_array($item['type'], array('offer', 'request'), true)) : ?>
                                         <div class="rideshare-riding-widget__booking-actions">
                                             <button
                                                 class="rideshare-riding-widget__secondary-button"

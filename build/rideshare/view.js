@@ -120,7 +120,7 @@
 	};
 
 	const render_booking_action = (item, state, set_state) => {
-		if (!state.can_create || item.type !== 'offer') {
+		if (!state.can_create || !['offer', 'request'].includes(item.type)) {
 			return null;
 		}
 

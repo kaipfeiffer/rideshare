@@ -62,7 +62,9 @@ class Riding_Controller extends Controller_Abstract
             return strcmp($left['start_date'] ?? '', $right['start_date'] ?? '');
         });
 
-        return array_map(array(static::class, 'format_riding_for_client'), $items);
+        $items = array_map(array(static::class, 'format_riding_for_client'), $items);
+
+        return array_values(array_filter($items, array(static::class, 'should_show_riding_item')));
     }
 
     static function get_offered_items(): array
@@ -292,10 +294,13 @@ class Riding_Controller extends Controller_Abstract
         $riding_id = intval($item['id'] ?? 0);
         $capacity = intval($item['passengers'] ?? 0);
         $booked_seats = 'offer' === $type ? Booking_Controller::get_booked_seats($riding_id) : 0;
-        $available_seats = 'offer' === $type ? max(0, $capacity - $booked_seats) : $capacity;
+        $is_booked = 'request' === $type && Booking_Controller::riding_has_active_booking($riding_id);
+        $available_seats = 'offer' === $type ? max(0, $capacity - $booked_seats) : ($is_booked ? 0 : $capacity);
+        $displayed_passengers = 'offer' === $type ? $available_seats : $capacity;
         $current_user_id = get_current_user_id();
-        $has_booking = 'offer' === $type && Booking_Controller::user_has_active_booking($riding_id, $current_user_id);
-        $can_book = static::current_user_can_book_riding($item, $available_seats, $has_booking, $current_user_id);
+        $has_booking = Booking_Controller::user_has_active_booking($riding_id, $current_user_id);
+        $is_own_riding = static::current_user_owns_riding($item, $type, $current_user_id);
+        $can_book = static::current_user_can_book_riding($item, $type, $available_seats, $has_booking, $is_booked, $is_own_riding, $current_user_id);
 
         return array(
             'id' => $riding_id,
@@ -305,10 +310,11 @@ class Riding_Controller extends Controller_Abstract
             'origin_label' => Stop_Controller::get_item_label(intval($item['origin_id'] ?? 0)),
             'destination_id' => intval($item['destination_id'] ?? 0),
             'destination_label' => Stop_Controller::get_item_label(intval($item['destination_id'] ?? 0)),
-            'passengers' => $available_seats,
+            'passengers' => $displayed_passengers,
             'capacity' => $capacity,
             'booked_seats' => $booked_seats,
             'available_seats' => $available_seats,
+            'is_booked' => $is_booked,
             'description' => $item['description'] ?? '',
             'start_date' => $item['start_date'] ?? '',
             'start_label' => static::format_datetime_display_value($item['start_date'] ?? ''),
@@ -316,36 +322,70 @@ class Riding_Controller extends Controller_Abstract
             'end_label' => static::format_datetime_display_value($item['end_date'] ?? ''),
             'period_label' => static::format_period_label($item['start_date'] ?? '', $item['end_date'] ?? ''),
             'passengers_label' => 'offer' === $type ? __('Available seats', 'rideshare') : __('Number of passengers', 'rideshare'),
+            'has_booking' => $has_booking,
+            'is_own_riding' => $is_own_riding,
+            'is_own_offer' => 'offer' === $type && $is_own_riding,
+            'is_own_request' => 'request' === $type && $is_own_riding,
             'can_book' => $can_book,
-            'booking_status_label' => static::get_booking_status_label($item, $available_seats, $has_booking, $current_user_id),
+            'booking_status_label' => static::get_booking_status_label($item, $type, $available_seats, $has_booking, $is_booked, $is_own_riding),
         );
     }
 
-    protected static function current_user_can_book_riding(array $item, int $available_seats, bool $has_booking, int $current_user_id): bool
+    protected static function should_show_riding_item(array $item): bool
+    {
+        if (!in_array($item['type'] ?? '', array('offer', 'request'), true)) {
+            return true;
+        }
+
+        if (1 > intval($item['available_seats'] ?? 0) && empty($item['is_own_riding'])) {
+            return !empty($item['has_booking']);
+        }
+
+        return true;
+    }
+
+    protected static function current_user_owns_riding(array $item, string $type, int $current_user_id): bool
+    {
+        if (!$current_user_id) {
+            return false;
+        }
+
+        if ('offer' === $type) {
+            return intval($item['driver_id'] ?? 0) === $current_user_id;
+        }
+
+        return intval($item['passenger_id'] ?? 0) === $current_user_id;
+    }
+
+    protected static function current_user_can_book_riding(array $item, string $type, int $available_seats, bool $has_booking, bool $is_booked, bool $is_own_riding, int $current_user_id): bool
     {
         if (!$current_user_id || !static::current_user_can_create_request()) {
             return false;
         }
 
-        if (empty($item['driver_id']) || $has_booking || 1 > $available_seats) {
+        if ($has_booking || $is_own_riding || 1 > $available_seats) {
             return false;
         }
 
-        return intval($item['driver_id']) !== $current_user_id;
+        if ('request' === $type && $is_booked) {
+            return false;
+        }
+
+        return 'offer' === $type ? !empty($item['driver_id']) : !empty($item['passenger_id']);
     }
 
-    protected static function get_booking_status_label(array $item, int $available_seats, bool $has_booking, int $current_user_id): string
+    protected static function get_booking_status_label(array $item, string $type, int $available_seats, bool $has_booking, bool $is_booked, bool $is_own_riding): string
     {
-        if (empty($item['driver_id'])) {
-            return '';
-        }
-
-        if ($current_user_id && intval($item['driver_id']) === $current_user_id) {
-            return __('Own offer', 'rideshare');
-        }
-
         if ($has_booking) {
             return __('Booked', 'rideshare');
+        }
+
+        if ('request' === $type && $is_booked) {
+            return __('Booked', 'rideshare');
+        }
+
+        if ($is_own_riding) {
+            return 'offer' === $type ? __('Own offer', 'rideshare') : __('Own request', 'rideshare');
         }
 
         if (1 > $available_seats) {

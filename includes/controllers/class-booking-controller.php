@@ -55,18 +55,32 @@ class Booking_Controller extends Controller_Abstract
             return array('type' => 'error', 'message' => reset($errors));
         }
 
-        $booking = Booking_Model::create(array(
-            'riding_id' => $data['riding_id'],
-            'passenger_id' => get_current_user_id(),
-            'seats' => $data['seats'],
-            'status' => 0,
-        ));
+        $booking = Booking_Model::create(static::get_booking_columns($data, $riding, get_current_user_id()));
 
         if (!$booking) {
             return array('type' => 'error', 'message' => __('The booking could not be saved.', 'rideshare'));
         }
 
         return array('type' => 'success', 'message' => __('Your booking has been saved.', 'rideshare'));
+    }
+
+    protected static function get_booking_columns(array $data, array $riding, int $user_id): array
+    {
+        $columns = array(
+            'riding_id' => $data['riding_id'],
+            'seats' => $data['seats'],
+            'status' => 0,
+        );
+
+        if (!empty($riding['driver_id'])) {
+            $columns['passenger_id'] = $user_id;
+            return $columns;
+        }
+
+        $columns['driver_id'] = $user_id;
+        $columns['seats'] = max(1, intval($riding['passengers'] ?? 1));
+
+        return $columns;
     }
 
     static function get_booked_seats(int $riding_id): int
@@ -87,12 +101,25 @@ class Booking_Controller extends Controller_Abstract
         return null !== Booking_Model::get_active_booking_for_user($riding_id, $passenger_id);
     }
 
+    static function riding_has_active_booking(int $riding_id): bool
+    {
+        if (!$riding_id) {
+            return false;
+        }
+
+        return Booking_Model::has_active_booking($riding_id);
+    }
+
     static function get_available_seats(array $riding): int
     {
         $capacity = max(0, intval($riding['passengers'] ?? 0));
 
         if (!$capacity || empty($riding['id'])) {
             return 0;
+        }
+
+        if (empty($riding['driver_id'])) {
+            return static::riding_has_active_booking(intval($riding['id'])) ? 0 : $capacity;
         }
 
         return max(0, $capacity - static::get_booked_seats(intval($riding['id'])));
@@ -115,11 +142,11 @@ class Booking_Controller extends Controller_Abstract
             return $errors;
         }
 
-        if (empty($riding['driver_id'])) {
-            $errors[] = __('Only ride offers can be booked.', 'rideshare');
+        if ($user_id && intval($riding['driver_id'] ?? 0) === $user_id) {
+            $errors[] = __('You cannot book your own ride.', 'rideshare');
         }
 
-        if ($user_id && intval($riding['driver_id'] ?? 0) === $user_id) {
+        if ($user_id && intval($riding['passenger_id'] ?? 0) === $user_id) {
             $errors[] = __('You cannot book your own ride.', 'rideshare');
         }
 
@@ -127,7 +154,11 @@ class Booking_Controller extends Controller_Abstract
             $errors[] = __('You have already booked this ride.', 'rideshare');
         }
 
-        if ($data['seats'] > static::get_available_seats($riding)) {
+        if (empty($riding['driver_id']) && static::riding_has_active_booking($data['riding_id'])) {
+            $errors[] = __('This ride request has already been booked.', 'rideshare');
+        }
+
+        if (!empty($riding['driver_id']) && $data['seats'] > static::get_available_seats($riding)) {
             $errors[] = __('This ride is fully booked.', 'rideshare');
         }
 
