@@ -170,6 +170,14 @@ class Autoloader
 			);
 			return $class_path;
 		}
+		// Blocks
+		if (str_ends_with($file_name, 'block')) {
+			$class_path =  self::$default_path . implode(
+				DIRECTORY_SEPARATOR,
+				array('includes', 'blocks', 'class-' . $file_name . '.php')
+			);
+			return $class_path;
+		}
 		// Controllers
 		if (str_ends_with($file_name, 'controller')) {
 			$class_path =  self::$default_path . implode(

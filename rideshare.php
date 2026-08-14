@@ -237,17 +237,47 @@ class RidesharePlugin
 		);
 	}
 
+
 	static function register_blocks(): void
 	{
-		$block_dir = __DIR__ . '/build/rideshare';
-
-		if (!file_exists($block_dir . '/block.json')) {
+		if (is_admin() || wp_is_json_request()) {
+			Riding_Widget_Block::register();
 			return;
 		}
 
-		register_block_type($block_dir, array('render_callback' => array(__CLASS__, 'render_callback')));
+		add_action('wp', array(__CLASS__, 'register_blocks_for_current_request'));
 	}
 
+
+	static function register_blocks_for_current_request(): void
+	{
+		if (!static::current_request_has_riding_widget_block()) {
+			return;
+		}
+
+		Riding_Widget_Block::register();
+	}
+
+
+	protected static function current_request_has_riding_widget_block(): bool
+	{
+		global $wp_query;
+
+		$posts = is_object($wp_query) ? (array) ($wp_query->posts ?? array()) : array();
+
+		if (empty($posts)) {
+			$post = get_post();
+			$posts = $post ? array($post) : array();
+		}
+
+		foreach ($posts as $post) {
+			if (is_object($post) && has_block('create-block/rideshare', $post)) {
+				return true;
+			}
+		}
+
+		return (bool) apply_filters('rideshare_current_request_has_riding_widget_block', false, $posts);
+	}
 
 	/**
 	 * load_dependencies
@@ -469,109 +499,6 @@ class RidesharePlugin
 
 		return in_array($user_id, static::get_rideshare_user_ids(), true);
 	}
-
-
-	/**
-	 * reading_list_block_init
-	 * 
-	 * template to register block types. Currently unsused
-	 * 
-	 * Registers the block using a `blocks-manifest.php` file, which improves the performance of block type registration.
-	 * Behind the scenes, it also registers all assets so they can be enqueued
-	 * through the block editor in the corresponding context.
-	 *
-	 * @see https://make.wordpress.org/core/2025/03/13/more-efficient-block-type-registration-in-6-8/
-	 * @see https://make.wordpress.org/core/2024/10/17/new-block-type-registration-apis-to-improve-performance-in-wordpress-6-7/
-	 */
-	static function reading_list_block_init()
-	{
-		/**
-		 * Registers the block(s) metadata from the `blocks-manifest.php` and registers the block type(s)
-		 * based on the registered block metadata.
-		 * Added in WordPress 6.8 to simplify the block metadata registration process added in WordPress 6.7.
-		 *
-		 * @see https://make.wordpress.org/core/2025/03/13/more-efficient-block-type-registration-in-6-8/
-		 */
-		if (function_exists('wp_register_block_types_from_metadata_collection')) {
-			/**
-			 * Registers the block type(s) from the `blocks-manifest.php` file.
-			 * 
-			 * Additional arguments for the method "register_block_type" must be
-			 * injected by the filter "register_block_type_args"
-			 * https://developer.wordpress.org/reference/hooks/register_block_type_args/
-			 * 
-			 * The template for the key 'render_callback' can be defined in the entry
-			 * 'render' => 'file:./render.php', in the block.json file.
-			 */
-
-			// phpcs:ignore existence of function is checked above
-			wp_register_block_types_from_metadata_collection(__DIR__ . '/build', __DIR__ . '/build/blocks-manifest.php');
-			return;
-		}
-
-		/**
-		 * Registers the block(s) metadata from the `blocks-manifest.php` file.
-		 * Added to WordPress 6.7 to improve the performance of block type registration.
-		 *
-		 * @see https://make.wordpress.org/core/2024/10/17/new-block-type-registration-apis-to-improve-performance-in-wordpress-6-7/
-		 */
-		if (function_exists('wp_register_block_metadata_collection')) {
-
-			// phpcs:ignore existence of function is checked above
-			wp_register_block_metadata_collection(__DIR__ . '/build', __DIR__ . '/build/blocks-manifest.php');
-		}
-
-		/**
-		 * Registers the block type(s) in the `blocks-manifest.php` file.
-		 *
-		 * @see https://developer.wordpress.org/reference/functions/register_block_type/
-		 */
-		$manifest_data = require __DIR__ . '/build/blocks-manifest.php';
-		foreach (array_keys($manifest_data) as $block_type) {
-			$slug = str_replace('-', '_', $block_type);
-			register_block_type(__DIR__ . "/build/{$block_type}", array('render_callback' => array(__CLASS__, 'render_callback')));
-		}
-	}
-
-
-	/**
-	 * Render callback for the dynamic block.
-	 * 
-	 * fallback, if method "wp_register_block_types_from_metadata_collection" is not available.
-	 * Currently unused
-	 * 
-	 * @param array $attributes Block attributes.
-	 * @param string $param Block parameters.
-	 * @param WP_Block_Type $object Block type object.
-	 * @return string Rendered block HTML.
-	 * 
-	 * @static
-	 * @since	0.1.0
-	 */
-	static function render_callback($attributes, $param, $object)
-	{
-		$name_parts = explode('/', $object->name ?? '/');
-		$slug = end($name_parts);
-
-		if ('rideshare' === $slug) {
-			return static::render_rideshare_widget((array) $attributes);
-		}
-
-		return '';
-	}
-
-	static function render_rideshare_widget(array $attributes = array()): string
-	{
-		$initial_data = Riding_Controller::get_client_data();
-		$riding_items = $initial_data['riding_items'];
-		$can_use = $initial_data['can_create'];
-		$field_id_prefix = wp_unique_id('rideshare-riding-widget-');
-
-		ob_start();
-		include __DIR__ . '/build/rideshare/render.php';
-		return ob_get_clean();
-	}
-
 
 	/**
 	 * run
