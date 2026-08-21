@@ -105,9 +105,11 @@ class Activator
 	public static function activate($plugin_file)
 	{
 		$roles 		= self::get_roles();
-		static::set_roles($roles);
-		static::db_delta();
-		static::ensure_user_uuids();
+		static::run_for_sites(function () use ($roles) {
+			static::set_roles($roles);
+			static::db_delta();
+			static::ensure_user_uuids();
+		});
 
 		$settings_class_file = plugin_dir_path(__FILE__) . 'class-settings.php';
 		if (!is_file($settings_class_file)) {
@@ -160,6 +162,29 @@ class Activator
 			$method	= array(__NAMESPACE__ . '\\' . $model, 'db_delta');
 			if (is_callable($method)) {
 				call_user_func($method);
+			}
+		}
+	}
+
+	protected static function run_for_sites(callable $callback): void
+	{
+		if (!is_multisite() || !function_exists('get_sites') || !function_exists('switch_to_blog')) {
+			$callback();
+			return;
+		}
+
+		$site_ids = get_sites(array(
+			'fields' => 'ids',
+			'number' => 0,
+		));
+
+		foreach ($site_ids as $site_id) {
+			switch_to_blog((int) $site_id);
+
+			try {
+				$callback((int) $site_id);
+			} finally {
+				restore_current_blog();
 			}
 		}
 	}
@@ -320,20 +345,24 @@ class Activator
 
 		// static::LOG_FLAGS & static::LOG_UPDATE_PLUGIN &&
 
-		$version	= get_option(static::$plugin_info['prefix'] . '_version', '0.1.0');
+		static::run_for_sites(function () {
+			$version = get_option(static::$plugin_info['prefix'] . '_version', '0.1.0');
 
-		error_log('update_plugin: ' . static::$plugin_info['prefix'] . '_version: ' . $version . ' -> ' . static::$plugin_info['Version']);
-		static::db_delta();
-		static::ensure_user_uuids();
+			error_log('update_plugin: ' . static::$plugin_info['prefix'] . '_version: ' . $version . ' -> ' . static::$plugin_info['Version']);
+			static::db_delta();
+			static::ensure_user_uuids();
 
-		switch ($version) {
-			case '0.1.1':
-				// update from 0.1.0 to 0.1.1
-				// static::LOG_FLAGS & static::LOG_UPDATE_PLUGIN &&
-				// update process for version 0.1.1
-				break;
-		}
-		update_option(static::$plugin_info['prefix'] . '_version', static::$plugin_info['Version'], false);
+			switch ($version) {
+				case '0.1.1':
+					// update from 0.1.0 to 0.1.1
+					// static::LOG_FLAGS & static::LOG_UPDATE_PLUGIN &&
+					// update process for version 0.1.1
+					break;
+			}
+			if (version_compare($version, static::$plugin_info['Version'], '<=')) {
+				update_option(static::$plugin_info['prefix'] . '_version', static::$plugin_info['Version'], false);
+			}
+		});
 
 		static::create_settings_file($plugin_file);
 	}
