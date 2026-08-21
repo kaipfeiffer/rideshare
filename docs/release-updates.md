@@ -8,7 +8,10 @@ Rideshare can be installed from a release ZIP and updated through the WordPress 
 bin/build-release.sh
 ```
 
-The script writes `.release/rideshare-<version>.zip`.
+The script writes:
+
+- `.release/rideshare-<version>.zip`
+- `.release/rideshare-update.json`
 
 The ZIP contains the plugin in a `rideshare/` root directory and includes runtime dependencies such as `vendor/` and `build/`. It excludes local/generated files such as `.git/`, `.release/`, `node_modules/`, and `includes/class-settings.php`.
 
@@ -20,16 +23,26 @@ USE_LOCAL_WPBASE=1 bin/build-release.sh
 
 Do not use that override for distributable releases.
 
+The update metadata uses the default release tag `v<version>` and creates the changelog from commit subjects since the previous Git tag.
+
+Override the defaults when needed:
+
+```sh
+RELEASE_TAG=v0.1.1-beta.1 bin/build-release.sh
+RIDESHARE_UPDATE_DOWNLOAD_URL=https://example.test/rideshare.zip bin/build-release.sh
+RELEASE_CHANGELOG='* Manual changelog entry' bin/build-release.sh
+```
+
 ## Publish update metadata
 
-Publish a JSON file as release asset:
+Publish the generated JSON file as release asset. It looks like this:
 
 ```json
 {
   "name": "Rideshare",
   "slug": "rideshare",
   "version": "0.1.1",
-  "download_url": "https://github.com/kaipfeiffer/rideshare/releases/download/0.1.1/rideshare-0.1.1.zip",
+  "download_url": "https://github.com/kaipfeiffer/rideshare/releases/download/v0.1.1/rideshare-0.1.1.zip",
   "requires": "5.7",
   "requires_php": "7.3",
   "tested": "7.0",
@@ -89,7 +102,7 @@ The same values can be changed in code through filters:
 6. Ensure build assets and `vendor/` are current.
 7. Run `bin/build-release.sh`.
 8. Upload the ZIP to the GitHub release.
-9. Upload `rideshare-update.json` to the same release.
+9. Upload `.release/rideshare-update.json` to the same release.
 10. WordPress will show the update in the plugin screen.
 
 ## Development setup
