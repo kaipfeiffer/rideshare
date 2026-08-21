@@ -27,5 +27,11 @@ const PLUGIN_PREFIX	= '';
 const PLUGIN_TEXT_DOMAIN	= '';
 const PLUGIN_URL	= '';
 const PLUGIN_VERSION	= '0';
+const REST_USER_FILTER_OPTION = 'hide_rideshare_users_in_rest';
+const INSTANCE_MODE_OPTION = 'instance_mode';
+const INSTANCE_UUID_OPTION = 'instance_uuid';
+const INSTANCE_MODE_STANDARD = 'standard';
+const INSTANCE_MODE_COLLECTOR = 'collector';
+const INSTANCE_MODE_STANDARD_COLLECTOR = 'standard_collector';
 // End Settings-Constants
 }

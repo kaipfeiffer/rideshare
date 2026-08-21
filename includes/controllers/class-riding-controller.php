@@ -15,6 +15,10 @@ if (!defined('WPINC')) {
 
 class Riding_Controller extends Controller_Abstract
 {
+    const AJAX_METHODS = array('get', 'post', 'remote_ping', 'remote_items');
+
+    const REMOTE_METHODS = array('remote_ping', 'remote_items');
+
     /** 
      * NONCE 
      * 
@@ -30,6 +34,48 @@ class Riding_Controller extends Controller_Abstract
      * @var string
      */
     static protected $model_class = null;
+
+    static function is_remote_allowed(string $name): bool
+    {
+        return in_array($name, static::REMOTE_METHODS, true);
+    }
+
+    static function remote_ping(array $request): array
+    {
+        $remote_instance = Remote_Request_Authentication_Helper::get_current_instance();
+
+        return array(
+            'success' => true,
+            'instance_uuid' => Instance_Controller::get_uuid(),
+            'mode' => Instance_Controller::get_mode(),
+            'remote_instance_uuid' => $remote_instance['instance_uuid'] ?? '',
+            'server_time' => time(),
+        );
+    }
+
+    static function remote_items(array $request): array
+    {
+        if (!Instance_Controller::can_expose_remote_rides()) {
+            return array(
+                'success' => false,
+                'message' => __('This instance does not expose rides to collectors.', 'rideshare'),
+                'items' => array(),
+            );
+        }
+
+        $items = array_values(array_filter(static::get_all_riding_items(0), function ($item) {
+            return empty($item['is_past'])
+                && in_array($item['type'] ?? '', array('offer', 'request'), true)
+                && 0 < intval($item['available_seats'] ?? 0);
+        }));
+
+        return array(
+            'success' => true,
+            'instance_uuid' => Instance_Controller::get_uuid(),
+            'mode' => Instance_Controller::get_mode(),
+            'items' => array_map(array(static::class, 'format_riding_for_remote'), $items),
+        );
+    }
 
     static function get_client_data(): array
     {
@@ -191,6 +237,9 @@ class Riding_Controller extends Controller_Abstract
 
         $user = get_userdata($user_id);
         $can_create = $user && in_array('rideshare_user', (array) $user->roles, true);
+        if ($can_create) {
+            User_Controller::ensure_wordpress_user_uuid($user_id);
+        }
 
         return (bool) apply_filters(
             'rideshare_riding_request_user_can_create',
@@ -357,6 +406,36 @@ class Riding_Controller extends Controller_Abstract
             'can_book' => $can_book,
             'booking_status_label' => static::get_booking_status_label($item, $type, $available_seats, $has_booking, $is_booked, $is_own_riding),
         );
+    }
+
+    protected static function format_riding_for_remote(array $item): array
+    {
+        $origin = Stop_Controller::get_item_remote_details(intval($item['origin_id'] ?? 0));
+        $destination = Stop_Controller::get_item_remote_details(intval($item['destination_id'] ?? 0));
+
+        return array(
+            'remote_riding_id' => intval($item['id'] ?? 0),
+            'type' => $item['type'] ?? '',
+            'origin' => $origin,
+            'destination' => $destination,
+            'origin_label' => static::format_remote_stop_label($origin),
+            'destination_label' => static::format_remote_stop_label($destination),
+            'passengers' => intval($item['passengers'] ?? 0),
+            'capacity' => intval($item['capacity'] ?? 0),
+            'available_seats' => intval($item['available_seats'] ?? 0),
+            'start_date' => $item['start_date'] ?? '',
+            'end_date' => $item['end_date'] ?? '',
+            'period_label' => $item['period_label'] ?? '',
+            'description' => $item['description'] ?? '',
+        );
+    }
+
+    protected static function format_remote_stop_label(array $stop): string
+    {
+        return trim(implode(' - ', array_filter(array(
+            $stop['label'] ?? '',
+            $stop['address_label'] ?? '',
+        ))));
     }
 
     protected static function should_show_riding_item(array $item): bool

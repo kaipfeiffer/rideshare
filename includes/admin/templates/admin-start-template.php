@@ -16,6 +16,35 @@
             <tbody>
                 <tr>
                     <th scope="row">
+                        <?php echo esc_html__('Instance mode', 'rideshare'); ?>
+                    </th>
+                    <td>
+                        <?php
+                        $mode_option_name = \KaiPfeiffer\Rideshare\Instance_Controller::get_mode_option_name();
+                        $current_mode = \KaiPfeiffer\Rideshare\Instance_Controller::get_mode();
+                        ?>
+                        <select
+                            id="<?php echo esc_attr($mode_option_name); ?>"
+                            name="<?php echo esc_attr($mode_option_name); ?>"
+                        >
+                            <?php foreach (\KaiPfeiffer\Rideshare\Instance_Controller::get_modes() as $mode => $label) : ?>
+                                <option value="<?php echo esc_attr($mode); ?>" <?php selected($current_mode, $mode); ?>>
+                                    <?php echo esc_html($label); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if (\KaiPfeiffer\Rideshare\Settings::INSTANCE_MODE_STANDARD_COLLECTOR === $current_mode) : ?>
+                            <p class="description">
+                                <?php echo esc_html__('This instance offers local rides and collects remote rides. Use this only for exceptional setups.', 'rideshare'); ?>
+                            </p>
+                        <?php endif; ?>
+                        <p class="description">
+                            <?php echo esc_html(sprintf(__('Instance UUID: %s', 'rideshare'), \KaiPfeiffer\Rideshare\Instance_Controller::get_uuid())); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
                         <?php echo esc_html__('REST API', 'rideshare'); ?>
                     </th>
                     <td>

@@ -16,6 +16,7 @@ if (!defined('WPINC')) {
 
 class User_Controller extends Controller_Abstract
 {
+    const UUID_META_KEY = 'rideshare_user_uuid';
 
 
     /** 
@@ -33,6 +34,54 @@ class User_Controller extends Controller_Abstract
      * @var string
      */
     static protected $model_class = null;
+
+    public static function create($data)
+    {
+        if (empty($data['uuid'])) {
+            $data['uuid'] = User_Model::create_uuid();
+        }
+
+        return parent::create($data);
+    }
+
+    static function get_uuid_meta_key(): string
+    {
+        return static::UUID_META_KEY;
+    }
+
+    static function ensure_wordpress_user_uuid(int $user_id): string
+    {
+        if (!$user_id) {
+            return '';
+        }
+
+        $uuid = (string) get_user_meta($user_id, static::get_uuid_meta_key(), true);
+        if ($uuid) {
+            return $uuid;
+        }
+
+        $uuid = User_Model::create_uuid();
+        update_user_meta($user_id, static::get_uuid_meta_key(), $uuid);
+
+        return $uuid;
+    }
+
+    static function get_current_user_uuid(): string
+    {
+        return static::ensure_wordpress_user_uuid(get_current_user_id());
+    }
+
+    static function ensure_rideshare_user_uuids(): void
+    {
+        $users = get_users(array(
+            'role__in' => array('rideshare_partner', 'rideshare_user'),
+            'fields' => 'ID',
+        ));
+
+        foreach ($users as $user_id) {
+            static::ensure_wordpress_user_uuid(intval($user_id));
+        }
+    }
 
 
 

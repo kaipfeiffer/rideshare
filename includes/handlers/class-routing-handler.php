@@ -59,6 +59,7 @@ class Routing_Handler
         $target     = $request->get('target', 'alphanum');
 
         $method     = strtolower($_SERVER['REQUEST_METHOD']);
+        $current_method = null;
 
         /*
 		 * HTTP method override for clients that can't use PUT/PATCH/DELETE. First, we check
@@ -67,26 +68,40 @@ class Routing_Handler
          * thanks to the Wordpress-Team the code in WP_REST_Server inspired the following five lines
 		 */
         if (isset($_GET['_method'])) {
-            $method =  strtolower($_GET['_method']);
+            $method =  sanitize_key(wp_unslash($_GET['_method']));
         } elseif (isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
-            $method =  strtolower($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);
+            $method =  sanitize_key(wp_unslash($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']));
         }
 
 
 
         $handler    = __NAMESPACE__ . '\\' . ucfirst(strtolower($target)) . '_Controller';
 
-        static::$logger->log($handler);
+        if (is_object(static::$logger) && method_exists(static::$logger, 'log')) {
+            static::$logger->log($handler);
+        }
         $check_method = array($handler, 'is_allowed');
-        if (is_callable($check_method)) {
-            if (call_user_func($check_method, $method)) {
-                $current_method = array($handler, $method);
+        $remote_check_method = array($handler, 'is_remote_allowed');
+        $is_allowed = is_callable($check_method) && call_user_func($check_method, $method);
+        $is_remote_method = is_callable($remote_check_method) && call_user_func($remote_check_method, $method);
+
+        if ($is_remote_method) {
+            $remote_authentication = Remote_Request_Authentication_Helper::authenticate_current_request($target, $method);
+            if (is_wp_error($remote_authentication)) {
+                wp_send_json_error(
+                    array('message' => $remote_authentication->get_error_message()),
+                    403
+                );
+            }
+        }
+
+        if ($is_allowed || $is_remote_method) {
+            $current_method = array($handler, $method);
+            if (!is_callable($current_method)) {
+                $instance       = new $handler();
+                $current_method = array($instance, $method);
                 if (!is_callable($current_method)) {
-                    $instance       = new $handler();
-                    $current_method = array($instance, $method);
-                    if (!is_callable($current_method)) {
-                        $current_method = null;
-                    }
+                    $current_method = null;
                 }
             }
         }

@@ -5,7 +5,7 @@ namespace KaiPfeiffer\Rideshare;
 /**
  * Plugin Name:       Rideshare
  * Description:       Rideshare connects local rides with local co-riders to reduce traffic and carbon dioxide emissions.
- * Version:           0.1.0
+ * Version:           0.1.1
  * Requires at least: 5.7
  * Requires PHP:      7.3
  * Author:            Kai Pfeiffer
@@ -27,10 +27,6 @@ if (! defined('ABSPATH')) {
 
 class RidesharePlugin
 {
-	const PLUGIN_PREFIX 		= 'kprs_';
-
-	const REST_USER_FILTER_OPTION = 'hide_rideshare_users_in_rest';
-
 	/**
 	 * $is_loaded
 	 * 
@@ -118,8 +114,9 @@ class RidesharePlugin
 		add_action('admin_menu', array(static::class, 'Admin__admin_menu'));
 		add_action('admin_init', array(static::class, 'Admin__init'));
 		add_filter('set-screen-option', array(static::class, 'Admin__set_screen_option'), 10, 3);
-		Update_Checker::register(__FILE__);
-		if ((defined('DOING_AJAX') && DOING_AJAX) || wp_is_json_request()) {
+		if (!wp_doing_ajax() && !wp_is_json_request()) {
+			Update_Checker::register(__FILE__);
+		} else {
 			foreach (static::$json_classes  as $class) {
 				if (is_callable(array($class, 'init_json'))) {
 					call_user_func(array($class, 'init_json'), static::use_logger());
@@ -182,9 +179,23 @@ class RidesharePlugin
 
 	protected static function plugin_update_needs_sync(): bool
 	{
-		$version = get_option(static::PLUGIN_PREFIX . '_version', '0.1.0');
+		$version = get_option(static::get_plugin_option_prefix() . '_version', '0.1.0');
 
 		return version_compare($version, static::get_plugin_version(), '<');
+	}
+
+
+	protected static function get_plugin_option_prefix(): string
+	{
+		$class_name = __NAMESPACE__ . '\\Settings';
+
+		if (class_exists($class_name) && defined($class_name . '::PLUGIN_PREFIX')) {
+			return $class_name::PLUGIN_PREFIX;
+		}
+
+		preg_match_all('/[A-Z]/', __NAMESPACE__, $matches);
+
+		return strtolower(implode('', $matches[0])) . '_';
 	}
 
 
@@ -408,14 +419,39 @@ class RidesharePlugin
 
 	static function get_rest_user_filter_option_name(): string
 	{
-		return static::PLUGIN_PREFIX . static::REST_USER_FILTER_OPTION;
+		return Settings::PLUGIN_PREFIX . Settings::REST_USER_FILTER_OPTION;
+	}
+
+	protected static function get_legacy_option_name(string $option): string
+	{
+		return 'kprs_' . $option;
+	}
+
+	protected static function get_option_with_legacy_fallback(string $option_name, string $option, $default)
+	{
+		$value = get_option($option_name, null);
+		if (null !== $value) {
+			return $value;
+		}
+
+		$legacy_value = get_option(static::get_legacy_option_name($option), null);
+		if (null !== $legacy_value) {
+			update_option($option_name, $legacy_value, false);
+			return $legacy_value;
+		}
+
+		return $default;
 	}
 
 	static function rideshare_rest_user_filter_enabled(): bool
 	{
 		return (bool) apply_filters(
 			'rideshare_rest_user_filter_enabled',
-			(bool) get_option(static::get_rest_user_filter_option_name(), true)
+			(bool) static::get_option_with_legacy_fallback(
+				static::get_rest_user_filter_option_name(),
+				Settings::REST_USER_FILTER_OPTION,
+				true
+			)
 		);
 	}
 

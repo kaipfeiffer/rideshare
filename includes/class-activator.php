@@ -28,6 +28,7 @@ class Activator
 		'Riding_Model',
 		'Booking_Model',
 		'User_Model',
+		'Remote_Instance_Model',
 		'Stop_Type_Model',
 		'Stop_Model',
 	);
@@ -106,6 +107,7 @@ class Activator
 		$roles 		= self::get_roles();
 		static::set_roles($roles);
 		static::db_delta();
+		static::ensure_user_uuids();
 
 		$settings_class_file = plugin_dir_path(__FILE__) . 'class-settings.php';
 		if (!is_file($settings_class_file)) {
@@ -181,6 +183,12 @@ class Activator
 		$new_settings_content .= 'const PLUGIN_TEXT_DOMAIN	= \'' . static::$plugin_info['TextDomain'] . '\';' . "\n";
 		$new_settings_content .= 'const PLUGIN_URL	= \'' . plugin_dir_url($plugin_file) . '\';' . "\n";
 		$new_settings_content .= 'const PLUGIN_VERSION	= \'' . static::$plugin_info['Version'] . '\';' . "\n";
+		$new_settings_content .= 'const REST_USER_FILTER_OPTION = \'hide_rideshare_users_in_rest\';' . "\n";
+		$new_settings_content .= 'const INSTANCE_MODE_OPTION = \'instance_mode\';' . "\n";
+		$new_settings_content .= 'const INSTANCE_UUID_OPTION = \'instance_uuid\';' . "\n";
+		$new_settings_content .= 'const INSTANCE_MODE_STANDARD = \'standard\';' . "\n";
+		$new_settings_content .= 'const INSTANCE_MODE_COLLECTOR = \'collector\';' . "\n";
+		$new_settings_content .= 'const INSTANCE_MODE_STANDARD_COLLECTOR = \'standard_collector\';' . "\n";
 
 		return $new_settings_content;
 	}
@@ -316,6 +324,7 @@ class Activator
 
 		error_log('update_plugin: ' . static::$plugin_info['prefix'] . '_version: ' . $version . ' -> ' . static::$plugin_info['Version']);
 		static::db_delta();
+		static::ensure_user_uuids();
 
 		switch ($version) {
 			case '0.1.1':
@@ -327,6 +336,17 @@ class Activator
 		update_option(static::$plugin_info['prefix'] . '_version', static::$plugin_info['Version'], false);
 
 		static::create_settings_file($plugin_file);
+	}
+
+	protected static function ensure_user_uuids(): void
+	{
+		if (is_callable(array(__NAMESPACE__ . '\\User_Model', 'ensure_missing_uuids'))) {
+			User_Model::ensure_missing_uuids();
+		}
+
+		if (is_callable(array(__NAMESPACE__ . '\\User_Controller', 'ensure_rideshare_user_uuids'))) {
+			User_Controller::ensure_rideshare_user_uuids();
+		}
 	}
 
 

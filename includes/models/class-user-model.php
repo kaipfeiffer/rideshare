@@ -29,6 +29,7 @@ class User_Model extends Model_Abstract
         'id'                    => '%d',
         'location_id'           => '%d',
         'hub_id'                => '%d',
+        'uuid'                  => '%s',
         'title'                 => '%s',
         'givenname'             => '%s',
         'familyname'            => '%s',
@@ -64,7 +65,10 @@ class User_Model extends Model_Abstract
      */
     protected static function get_defaults(): array
     {
-        return array('created' => date('Y-m-d H:i:s'));
+        return array(
+            'uuid' => static::create_uuid(),
+            'created' => date('Y-m-d H:i:s'),
+        );
     }
 
 
@@ -130,6 +134,51 @@ class User_Model extends Model_Abstract
         );
     }
 
+    static function create_uuid(): string
+    {
+        if (function_exists('wp_generate_uuid4')) {
+            return wp_generate_uuid4();
+        }
+
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
+        );
+    }
+
+    static function ensure_missing_uuids(): void
+    {
+        global $wpdb;
+
+        $table_name = static::get_table_name();
+
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_name)) !== $table_name) {
+            return;
+        }
+
+        $rows = $wpdb->get_results(
+            "SELECT id FROM `{$table_name}` WHERE uuid IS NULL OR uuid = ''",
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            $wpdb->update(
+                $table_name,
+                array('uuid' => static::create_uuid()),
+                array('id' => intval($row['id'])),
+                array('%s'),
+                array('%d')
+            );
+        }
+    }
+
 
     /**
      *  db_delta
@@ -148,6 +197,7 @@ class User_Model extends Model_Abstract
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             location_id bigint(20) UNSIGNED DEFAULT NULL,
             hub_id bigint(20) UNSIGNED DEFAULT NULL,
+            uuid varchar(36) DEFAULT NULL,
             title varchar(50) DEFAULT NULL,
             givenname varchar(100) DEFAULT NULL,
             familyname varchar(100) DEFAULT NULL,
@@ -161,11 +211,13 @@ class User_Model extends Model_Abstract
             updated datetime DEFAULT NULL,
             deleted datetime DEFAULT NULL,
             PRIMARY KEY id (id),
+            UNIQUE KEY uuid (uuid),
             KEY hub_id (hub_id),
             KEY familyname (familyname)
         ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
+        static::ensure_missing_uuids();
     }
 }

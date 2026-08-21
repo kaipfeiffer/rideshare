@@ -69,4 +69,47 @@ class Stop_Controller extends Controller_Abstract
 
         return $stop['title'] ?: sprintf(__('Stop #%d', 'rideshare'), $id);
     }
+
+    static function get_item_remote_details(int $id): array
+    {
+        $details = array(
+            'id' => $id,
+            'label' => static::get_item_label($id),
+            'street' => '',
+            'postal_code' => '',
+            'city' => '',
+            'region' => '',
+            'country' => '',
+            'address_label' => '',
+        );
+
+        if (!$id) {
+            return $details;
+        }
+
+        $stop = Stop_Model::read($id);
+        if (!is_array($stop) || !empty($stop['deleted'])) {
+            return $details;
+        }
+
+        $location = array();
+        if (!empty($stop['location_id'])) {
+            $location = Location_Model::read(intval($stop['location_id']));
+            $location = is_array($location) && empty($location['deleted']) ? $location : array();
+        }
+
+        $details['label'] = $stop['title'] ?: $details['label'];
+        $details['street'] = (string) ($location['street'] ?? '');
+        $details['postal_code'] = (string) ($location['zipcode'] ?? '');
+        $details['city'] = (string) ($location['city'] ?? '');
+        $details['region'] = (string) ($location['region'] ?? '');
+        $details['country'] = (string) ($location['country'] ?? '');
+        $details['address_label'] = trim(implode(', ', array_filter(array(
+            trim($details['street']),
+            trim(trim($details['postal_code'] . ' ' . $details['city'])),
+            trim($details['country']),
+        ))));
+
+        return $details;
+    }
 }

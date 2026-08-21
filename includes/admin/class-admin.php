@@ -499,6 +499,14 @@ class Admin implements AjaxInterface
         $enabled = isset($_POST[$option_name]) ? '1' : '0';
 
         update_option($option_name, $enabled, false);
+
+        $mode_option_name = Instance_Controller::get_mode_option_name();
+        $mode = sanitize_key(wp_unslash($_POST[$mode_option_name] ?? Settings::INSTANCE_MODE_STANDARD));
+        if (!array_key_exists($mode, Instance_Controller::get_modes())) {
+            $mode = Settings::INSTANCE_MODE_STANDARD;
+        }
+
+        update_option($mode_option_name, $mode, false);
         add_settings_error('rideshare_settings', 'rideshare_settings_saved', __('Settings saved.', 'rideshare'), 'updated');
     }
 
@@ -676,6 +684,8 @@ class Admin implements AjaxInterface
             return false;
         }
 
+        $user_uuid = User_Controller::ensure_wordpress_user_uuid(intval($user_id));
+
         if (empty($_POST['tramp_location']) || empty($_POST['tramp_user'])) {
             return false;
         }
@@ -703,6 +713,10 @@ class Admin implements AjaxInterface
         }
 
         $user_columns['location_id'] = $tramp_location_id;
+        if ($user_uuid && empty($user_columns['uuid'])) {
+            $user_columns['uuid'] = $user_uuid;
+        }
+
         if (!isset($user_columns['id']) || empty($user_columns['id'])) {
             $tramp_user_data = User_Controller::create($user_columns);
             $tramp_user_id = $tramp_user_data[User_Controller::get_primary_key()];
