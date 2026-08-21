@@ -129,6 +129,10 @@ class Autoloader
 					DIRECTORY_SEPARATOR,
 					array('includes', 'helpers', 'class-sanitize-helper.php')
 				),
+				'Update_Checker' => implode(
+					DIRECTORY_SEPARATOR,
+					array('includes', 'class-update-checker.php')
+				),
 			);
 		}
 

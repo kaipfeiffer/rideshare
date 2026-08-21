@@ -4,27 +4,26 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ce7768ab17425e6344e8550ce8744ce6",
+    "content-hash": "7c87cc825a0689e66ae31ad223df079a",
     "packages": [
         {
             "name": "kaipfeiffer/wpbase",
-            "version": "dev-main",
+            "version": "v0.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/kaipfeiffer/wpbase.git",
-                "reference": "a8824e6c497eae4cde5be6e05f12ee37c5f8daff"
+                "reference": "3b297ce4b6b3e5491687f1143d25c5a18f33cd8b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kaipfeiffer/wpbase/zipball/a8824e6c497eae4cde5be6e05f12ee37c5f8daff",
-                "reference": "a8824e6c497eae4cde5be6e05f12ee37c5f8daff",
+                "url": "https://api.github.com/repos/kaipfeiffer/wpbase/zipball/3b297ce4b6b3e5491687f1143d25c5a18f33cd8b",
+                "reference": "3b297ce4b6b3e5491687f1143d25c5a18f33cd8b",
                 "shasum": ""
             },
             "require": {
                 "ext-mbstring": "*",
                 "php": "^7.3|^8.0"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -46,18 +45,16 @@
                 "php"
             ],
             "support": {
-                "source": "https://github.com/kaipfeiffer/wpbase/tree/main",
+                "source": "https://github.com/kaipfeiffer/wpbase/tree/v0.1.0",
                 "issues": "https://github.com/kaipfeiffer/wpbase/issues"
             },
-            "time": "2026-04-24T11:19:19+00:00"
+            "time": "2026-08-07T07:41:46+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "kaipfeiffer/wpbase": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {},

@@ -1,6 +1,6 @@
 {
     "require": {
-        "kaipfeiffer/wpbase": "dev-main"
+        "kaipfeiffer/wpbase": "^0.1"
     },
     "repositories": [{
         "name": "repo-name",

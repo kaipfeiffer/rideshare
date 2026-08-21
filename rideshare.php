@@ -118,6 +118,7 @@ class RidesharePlugin
 		add_action('admin_menu', array(static::class, 'Admin__admin_menu'));
 		add_action('admin_init', array(static::class, 'Admin__init'));
 		add_filter('set-screen-option', array(static::class, 'Admin__set_screen_option'), 10, 3);
+		Update_Checker::register(__FILE__);
 		if ((defined('DOING_AJAX') && DOING_AJAX) || wp_is_json_request()) {
 			foreach (static::$json_classes  as $class) {
 				if (is_callable(array($class, 'init_json'))) {
