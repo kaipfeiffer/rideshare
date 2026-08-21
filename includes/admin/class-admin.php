@@ -115,7 +115,7 @@ class Admin implements AjaxInterface
      *  @var array
      *  @since 1.0.39
      */
-    protected static $sub_pages = array('User_Subpage', 'Stop_Subpage', 'Location_Subpage');
+    protected static $sub_pages = array('User_Subpage', 'Stop_Subpage', 'Location_Subpage', 'Remote_Instance_Subpage');
 
     /*
     *   PROTECTED METHODS
